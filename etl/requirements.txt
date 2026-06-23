@@ -1,0 +1,5 @@
+pandas>=2.0
+redis>=5.0
+python-dotenv
+tqdm
+numpy

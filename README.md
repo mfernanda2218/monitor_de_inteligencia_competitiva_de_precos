@@ -1,36 +1,36 @@
-# Price Intelligence Monitor
+# Monitor de Inteligência Competitiva de Preços
 
-A competitive price intelligence dashboard for monitoring product prices across multiple Brazilian marketplaces. Built with Python ETL, Next.js 14, and Redis.
+Um dashboard de inteligência competitiva de preços para monitorar preços de produtos em múltiplos marketplaces brasileiros. Construído com Python ETL, Next.js 14 e Redis.
 
-## Features
+## Funcionalidades
 
-- **Real-time Price Monitoring**: Track 1.2M+ price points across multiple marketplaces
-- **Brand Analysis**: Compare pricing and positioning by brand
-- **Marketplace Coverage**: Analyze channel performance and brand presence
-- **Price Timeline**: Interactive charts showing price evolution over time
-- **Alerts System**: Automated detection of pricing opportunities and risks
-- **Premium Dark UI**: Modern glassmorphism design with electric blue accents
+- **Monitoramento de Preços em Tempo Real**: Acompanhe 1,2M+ pontos de preços em múltiplos marketplaces
+- **Análise de Marcas**: Compare preços e posicionamento por marca
+- **Cobertura de Marketplaces**: Analise o desempenho dos canais e presença da marca
+- **Linha do Tempo de Preços**: Gráficos interativos mostrando a evolução dos preços ao longo do tempo
+- **Sistema de Alertas**: Detecção automatizada de oportunidades e riscos de preços
+- **Interface Premium Dark**: Design moderno glassmorphism com acentos em azul elétrico
 
-## Architecture
+## Arquitetura
 
 ```
 CSV (515MB)
     │
     ▼
-[Python ETL Script]
-    ├── Reads CSV in chunks (50k lines)
-    ├── Computes KPIs and aggregations
-    ├── Serializes as JSON
-    └── Persists in Redis (24h TTL)
+[Script Python ETL]
+    ├── Lê CSV em blocos (50k linhas)
+    ├── Calcula KPIs e agregações
+    ├── Serializa como JSON
+    └── Persiste no Redis (TTL 24h)
             │
             ▼
-       [Redis Cache]
+       [Cache Redis]
             │
             ▼
-    [Next.js API Routes] ──► [Next.js Frontend]
+    [Rotas API Next.js] ──► [Frontend Next.js]
             │                      │
      /api/summary           Dashboard Premium
-     /api/brands            (Charts, Tables,
+     /api/brands            (Gráficos, Tabelas,
      /api/marketplaces       KPIs, Timeline)
      /api/skus
      /api/timeline
@@ -41,183 +41,183 @@ CSV (515MB)
     (Deploy via GitHub)
 ```
 
-## Prerequisites
+## Pré-requisitos
 
 - Python 3.8+
 - Node.js 18+
-- Redis (local or Railway)
-- CSV data file (`export_midea_31_13.csv`)
+- Redis (local ou Railway)
+- Arquivo de dados CSV (`export_midea_31_13.csv`)
 
-## Setup
+## Configuração
 
-### 1. Install Python Dependencies
+### 1. Instalar Dependências Python
 
 ```bash
 cd etl
 pip install -r requirements.txt
 ```
 
-### 2. Install Node.js Dependencies
+### 2. Instalar Dependências Node.js
 
 ```bash
 npm install
 ```
 
-### 3. Configure Environment
+### 3. Configurar Ambiente
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` and set your Redis URL:
+Edite `.env` e defina sua URL do Redis:
 ```
 REDIS_URL=redis://localhost:6379
 ```
 
-### 4. Run ETL Process
+### 4. Executar Processo ETL
 
 ```bash
 cd etl
 python process_csv.py
 ```
 
-This will:
-- Read the CSV in chunks (memory efficient)
-- Compute aggregations by brand, marketplace, category, and SKU
-- Store results in Redis with 24h TTL
+Isso irá:
+- Ler o CSV em blocos (eficiente em memória)
+- Calcular agregações por marca, marketplace, categoria e SKU
+- Armazenar resultados no Redis com TTL de 24h
 
-### 5. Start Next.js Development Server
+### 5. Iniciar Servidor de Desenvolvimento Next.js
 
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) in your browser.
+Abra [http://localhost:3000](http://localhost:3000) no seu navegador.
 
-## Pages
+## Páginas
 
-- **/** - Executive dashboard with KPIs and quick navigation
-- **/brands** - Brand analysis with pricing metrics
-- **/marketplaces** - Marketplace coverage and performance
-- **/skus** - Top SKUs by data volume
-- **/timeline** - Interactive price timeline charts
-- **/alerts** - Pricing opportunities and risk alerts
+- **/** - Dashboard executivo com KPIs e navegação rápida
+- **/brands** - Análise de marcas com métricas de preços
+- **/marketplaces** - Cobertura e desempenho de marketplaces
+- **/skus** - Principais SKUs por volume de dados
+- **/timeline** - Gráficos interativos de linha do tempo de preços
+- **/alerts** - Alertas de oportunidades e riscos de preços
 
-## API Routes
+## Rotas da API
 
-- `GET /api/summary` - General dashboard statistics
-- `GET /api/brands` - Brand-level aggregations
-- `GET /api/marketplaces` - Marketplace-level aggregations
-- `GET /api/categories` - Category-level data
-- `GET /api/timeline?sku=XXX` - Price timeline for specific SKU
-- `GET /api/alerts` - Generated alerts and opportunities
-- `GET /api/top_skus` - Top 20 SKUs by data volume
+- `GET /api/summary` - Estatísticas gerais do dashboard
+- `GET /api/brands` - Agregações por marca
+- `GET /api/marketplaces` - Agregações por marketplace
+- `GET /api/categories` - Dados por categoria
+- `GET /api/timeline?sku=XXX` - Linha do tempo de preços para SKU específico
+- `GET /api/alerts` - Alertas e oportunidades gerados
+- `GET /api/top_skus` - Top 20 SKUs por volume de dados
 
-## Deployment to Railway
+## Deploy no Railway
 
-### 1. Create Redis Instance
+### 1. Criar Instância Redis
 
-In Railway dashboard:
-- Click "New Project" → "Add a Service"
-- Select "Redis" from the plugins
-- Railway will provide a Redis connection URL
+No dashboard do Railway:
+- Clique em "New Project" → "Add a Service"
+- Selecione "Redis" nos plugins
+- O Railway fornecerá uma URL de conexão Redis
 
-### 2. Deploy Next.js App
+### 2. Deploy do App Next.js
 
 ```bash
-# Initialize git repo
+# Inicializar repositório git
 git init
 git add .
-git commit -m "Initial commit"
+git commit -m "Commit inicial"
 
-# Create Railway project and link
+# Criar projeto Railway e vincular
 railway login
 railway init
 railway up
 
-# Set environment variables in Railway dashboard
-REDIS_URL=<your-railway-redis-url>
-NEXT_PUBLIC_APP_NAME=Price Intelligence Monitor
+# Definir variáveis de ambiente no dashboard Railway
+REDIS_URL=<sua-url-redis-railway>
+NEXT_PUBLIC_APP_NAME=Monitor de Inteligência Competitiva de Preços
 ```
 
-### 3. Run ETL on Railway (Optional)
+### 3. Executar ETL no Railway (Opcional)
 
-For automated ETL, create a separate Railway service:
-- Add a new service with Python builder
-- Set build command to install requirements
-- Set start command to run `python etl/process_csv.py`
-- Configure as a cron job or one-off service
+Para ETL automatizado, crie um serviço Railway separado:
+- Adicione um novo serviço com builder Python
+- Defina o comando de build para instalar requirements
+- Defina o comando de start para executar `python etl/process_csv.py`
+- Configure como job cron ou serviço one-off
 
-## Data Structure
+## Estrutura de Dados
 
-### CSV Fields
+### Campos do CSV
 
-| Field | Type | Description |
+| Campo | Tipo | Descrição |
 |-------|------|-------------|
-| TITLE OF MARKETPLACE | Text | Product name on marketplace |
-| PRODUCT | Text | Standardized product name |
-| SKU | String | Product SKU identifier |
-| FAMILY | String | Product family |
-| COLLECTION DATE | Date | Data collection date |
-| COLLECTION HOUR | Time | Collection hour |
-| EXECUTION HOUR | Time | Execution hour |
-| SPOT PRICE | Float | Cash price |
-| FORWARD PRICE | Float | Installment price |
-| PRICE FROM | Float | Reference price |
-| NUMBER OF INSTALLMENTS | Int | Number of installments |
-| INSTALLMENT VALUE | Float | Installment value |
-| BRAND | String | Brand name |
-| MARKETPLACE | String | Marketplace name |
-| CATEGORY | String | Product category |
-| SUBCATEGORY | String | Product subcategory |
-| SELLER | String | Seller name |
-| COLOR | String | Product color |
-| OFFER URL | URL | Direct offer link |
-| PIX PRICE | Float | PIX price |
-| ID | UUID | Unique record ID |
+| TITLE OF MARKETPLACE | Texto | Nome do produto no marketplace |
+| PRODUCT | Texto | Nome do produto padronizado |
+| SKU | String | Identificador SKU do produto |
+| FAMILY | String | Família do produto |
+| COLLECTION DATE | Data | Data de coleta dos dados |
+| COLLECTION HOUR | Hora | Hora da coleta |
+| EXECUTION HOUR | Hora | Hora de execução |
+| SPOT PRICE | Float | Preço à vista |
+| FORWARD PRICE | Float | Preço parcelado |
+| PRICE FROM | Float | Preço de referência |
+| NUMBER OF INSTALLMENTS | Int | Número de parcelas |
+| INSTALLMENT VALUE | Float | Valor da parcela |
+| BRAND | String | Nome da marca |
+| MARKETPLACE | String | Nome do marketplace |
+| CATEGORY | String | Categoria do produto |
+| SUBCATEGORY | String | Subcategoria do produto |
+| SELLER | String | Nome do vendedor |
+| COLOR | String | Cor do produto |
+| OFFER URL | URL | Link direto da oferta |
+| PIX PRICE | Float | Preço PIX |
+| ID | UUID | ID único do registro |
 
-### Redis Keys
+### Chaves Redis
 
-- `dashboard:summary` - General statistics
-- `dashboard:brands` - Brand aggregations
-- `dashboard:marketplaces` - Marketplace aggregations
-- `dashboard:categories` - Category data
-- `dashboard:timeline:{sku}` - SKU price timeline
-- `dashboard:alerts` - Generated alerts
+- `dashboard:summary` - Estatísticas gerais
+- `dashboard:brands` - Agregações por marca
+- `dashboard:marketplaces` - Agregações por marketplace
+- `dashboard:categories` - Dados por categoria
+- `dashboard:timeline:{sku}` - Linha do tempo de preços do SKU
+- `dashboard:alerts` - Alertas gerados
 - `dashboard:top_skus` - Top 20 SKUs
 
-## Design System
+## Sistema de Design
 
-- **Colors**: Deep Navy (`#0A0E1A`), Electric Blue (`#00D4FF`), Neon Green (`#00FF88`), Amber (`#FFB800`)
-- **Typography**: Inter (Google Fonts)
-- **Components**: Glassmorphism cards with backdrop-blur
-- **Charts**: Recharts for data visualization
+- **Cores**: Azul Marinho Profundo (`#0A0E1A`), Azul Elétrico (`#00D4FF`), Verde Neon (`#00FF88`), Âmbar (`#FFB800`)
+- **Tipografia**: Inter (Google Fonts)
+- **Componentes**: Cards glassmorphism com backdrop-blur
+- **Gráficos**: Recharts para visualização de dados
 
-## Troubleshooting
+## Solução de Problemas
 
-### Redis Connection Error
+### Erro de Conexão Redis
 
-Ensure Redis is running:
+Certifique-se de que o Redis está rodando:
 ```bash
-redis-cli ping  # Should return PONG
+redis-cli ping  # Deve retornar PONG
 ```
 
-### ETL Memory Issues
+### Problemas de Memória no ETL
 
-The script uses chunked reading (50k lines) to handle large files. If you still encounter memory issues, reduce `CHUNK_SIZE` in `etl/process_csv.py`.
+O script usa leitura em blocos (50k linhas) para lidar com arquivos grandes. Se ainda encontrar problemas de memória, reduza `CHUNK_SIZE` em `etl/process_csv.py`.
 
-### TypeScript Errors After npm install
+### Erros TypeScript Após npm install
 
-If you see TypeScript errors after running `npm install`, restart your IDE or run:
+Se você ver erros TypeScript após executar `npm install`, reinicie sua IDE ou execute:
 ```bash
 rm -rf .next
 npm run dev
 ```
 
-## License
+## Licença
 
 MIT
 
-## Support
+## Suporte
 
-For issues or questions, please refer to the implementation plan document.
+Para problemas ou dúvidas, consulte o documento de plano de implementação.

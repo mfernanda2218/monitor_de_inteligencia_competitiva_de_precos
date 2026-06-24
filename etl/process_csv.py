@@ -41,8 +41,8 @@ def process_chunk(chunk):
                 'marketplaces': set()
             }
         results['brands'][brand]['count'] += len(group)
-        results['brands'][brand]['spot_prices'].extend(group['SPOT PRICE'].dropna().tolist())
-        results['brands'][brand]['forward_prices'].extend(group['FORWARD PRICE'].dropna().tolist())
+        results['brands'][brand]['spot_prices'].extend(group['SPOT PRICE OF MARKETPLACE'].dropna().tolist())
+        results['brands'][brand]['forward_prices'].extend(group['FORWARD PRICE OF MARKETPLACE'].dropna().tolist())
         results['brands'][brand]['marketplaces'].update(group['MARKETPLACE'].dropna().unique())
     
     # Process by marketplace
@@ -56,7 +56,7 @@ def process_chunk(chunk):
                 'brands': set()
             }
         results['marketplaces'][mp]['count'] += len(group)
-        results['marketplaces'][mp]['spot_prices'].extend(group['SPOT PRICE'].dropna().tolist())
+        results['marketplaces'][mp]['spot_prices'].extend(group['SPOT PRICE OF MARKETPLACE'].dropna().tolist())
         results['marketplaces'][mp]['brands'].update(group['BRAND'].dropna().unique())
     
     # Process by category
@@ -70,7 +70,7 @@ def process_chunk(chunk):
                 'brands': set()
             }
         results['categories'][cat]['count'] += len(group)
-        results['categories'][cat]['avg_spot_price'].extend(group['SPOT PRICE'].dropna().tolist())
+        results['categories'][cat]['avg_spot_price'].extend(group['SPOT PRICE OF MARKETPLACE'].dropna().tolist())
         results['categories'][cat]['brands'].update(group['BRAND'].dropna().unique())
     
     # Process by SKU for timeline
@@ -83,7 +83,7 @@ def process_chunk(chunk):
             results['timeline'][sku_key] = {}
         if date_key not in results['timeline'][sku_key]:
             results['timeline'][sku_key][date_key] = []
-        results['timeline'][sku_key][date_key].extend(group['SPOT PRICE'].dropna().tolist())
+        results['timeline'][sku_key][date_key].extend(group['SPOT PRICE OF MARKETPLACE'].dropna().tolist())
     
     return results
 
@@ -246,6 +246,9 @@ def main():
     print(f"\nProcessed {total_chunks} chunks")
     print(f"Total records: {accumulated['total_records']}")
     
+    # Get top SKUs before finalizing (needs original timeline structure)
+    top_skus = get_top_skus(accumulated, limit=20)
+    
     # Finalize results
     results = finalize_results(accumulated)
     
@@ -261,9 +264,6 @@ def main():
     
     # Generate alerts
     alerts = generate_alerts(results)
-    
-    # Get top SKUs
-    top_skus = get_top_skus(results, limit=20)
     
     # Store in Redis
     print("\nStoring data in Redis...")

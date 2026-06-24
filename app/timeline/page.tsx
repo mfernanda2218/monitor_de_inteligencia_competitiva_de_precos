@@ -45,7 +45,7 @@ export default function TimelinePage() {
         }
       })
       .catch(err => {
-        setError('Failed to load SKUs');
+        setError('Falha ao carregar SKUs');
         setLoading(false);
       });
   }, [sku]);
@@ -59,31 +59,31 @@ export default function TimelinePage() {
         setLoading(false);
       })
       .catch(err => {
-        setError('Failed to load timeline data');
+        setError('Falha ao carregar dados da linha do tempo');
         setLoading(false);
       });
   };
 
-  if (loading) return <div className="loading">Loading timeline...</div>;
+  if (loading) return <div className="loading">Carregando linha do tempo...</div>;
   if (error) return <div className="error">{error}</div>;
 
   return (
     <div className="container" style={{ padding: '40px 20px' }}>
       <header style={{ marginBottom: '40px' }}>
         <Link href="/" style={{ color: '#00D4FF', textDecoration: 'none', marginBottom: '16px', display: 'inline-block' }}>
-          ← Back to Dashboard
+          ← Voltar ao Dashboard
         </Link>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '8px', color: '#00D4FF' }}>
-          Price Timeline
+          Linha do Tempo de Preços
         </h1>
         <p style={{ color: '#64748B', fontSize: '1.1rem' }}>
-          Historical price evolution by SKU
+          Evolução histórica de preços por SKU
         </p>
       </header>
 
       <div className="card" style={{ marginBottom: '24px' }}>
         <label style={{ display: 'block', marginBottom: '8px', color: '#E2E8F0' }}>
-          Select SKU:
+          Selecionar SKU:
         </label>
         <select
           value={sku}
@@ -107,7 +107,7 @@ export default function TimelinePage() {
       {timeline && timeline.length > 0 && (
         <div className="card">
           <h2 style={{ fontSize: '1.5rem', marginBottom: '20px', color: '#00D4FF' }}>
-            Price Evolution: {sku}
+            Evolução de Preço: {sku}
           </h2>
           <ResponsiveContainer width="100%" height={400}>
             <LineChart data={timeline}>
@@ -135,21 +135,21 @@ export default function TimelinePage() {
                 dataKey="avg_price" 
                 stroke="#00D4FF" 
                 strokeWidth={2}
-                name="Average Price"
+                name="Preço Médio"
               />
               <Line 
                 type="monotone" 
                 dataKey="min_price" 
                 stroke="#00FF88" 
                 strokeWidth={2}
-                name="Min Price"
+                name="Preço Mínimo"
               />
               <Line 
                 type="monotone" 
                 dataKey="max_price" 
                 stroke="#FFB800" 
                 strokeWidth={2}
-                name="Max Price"
+                name="Preço Máximo"
               />
             </LineChart>
           </ResponsiveContainer>

@@ -28,12 +28,12 @@ export default function BrandsPage() {
         setLoading(false);
       })
       .catch(err => {
-        setError('Failed to load brands data');
+        setError('Falha ao carregar dados de marcas');
         setLoading(false);
       });
   }, []);
 
-  if (loading) return <div className="loading">Loading brands analysis...</div>;
+  if (loading) return <div className="loading">Carregando análise de marcas...</div>;
   if (error) return <div className="error">{error}</div>;
 
   const brandsArray = brands ? Object.entries(brands).map(([name, data]) => ({ name, ...data })) : [];
@@ -42,13 +42,13 @@ export default function BrandsPage() {
     <div className="container" style={{ padding: '40px 20px' }}>
       <header style={{ marginBottom: '40px' }}>
         <Link href="/" style={{ color: '#00D4FF', textDecoration: 'none', marginBottom: '16px', display: 'inline-block' }}>
-          ← Back to Dashboard
+          ← Voltar ao Dashboard
         </Link>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '8px', color: '#00D4FF' }}>
-          Brand Analysis
+          Análise de Marcas
         </h1>
         <p style={{ color: '#64748B', fontSize: '1.1rem' }}>
-          Competitive positioning by brand
+          Posicionamento competitivo por marca
         </p>
       </header>
 
@@ -56,13 +56,13 @@ export default function BrandsPage() {
         <table className="table">
           <thead>
             <tr>
-              <th>Brand</th>
-              <th>Records</th>
-              <th>Avg Price</th>
-              <th>Min Price</th>
-              <th>Max Price</th>
-              <th>Price Variation</th>
-              <th>Marketplace Coverage</th>
+              <th>Marca</th>
+              <th>Registros</th>
+              <th>Preço Médio</th>
+              <th>Preço Mín</th>
+              <th>Preço Máx</th>
+              <th>Variação de Preço</th>
+              <th>Cobertura de Marketplace</th>
             </tr>
           </thead>
           <tbody>

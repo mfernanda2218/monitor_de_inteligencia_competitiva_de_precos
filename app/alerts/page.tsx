@@ -25,25 +25,25 @@ export default function AlertsPage() {
         setLoading(false);
       })
       .catch(err => {
-        setError('Failed to load alerts');
+        setError('Falha ao carregar alertas');
         setLoading(false);
       });
   }, []);
 
-  if (loading) return <div className="loading">Loading alerts...</div>;
+  if (loading) return <div className="loading">Carregando alertas...</div>;
   if (error) return <div className="error">{error}</div>;
 
   return (
     <div className="container" style={{ padding: '40px 20px' }}>
       <header style={{ marginBottom: '40px' }}>
         <Link href="/" style={{ color: '#00D4FF', textDecoration: 'none', marginBottom: '16px', display: 'inline-block' }}>
-          ← Back to Dashboard
+          ← Voltar ao Dashboard
         </Link>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '8px', color: '#00D4FF' }}>
-          Price Alerts
+          Alertas de Preço
         </h1>
         <p style={{ color: '#64748B', fontSize: '1.1rem' }}>
-          Competitive opportunities and risks
+          Oportunidades e riscos competitivos
         </p>
       </header>
 
@@ -67,9 +67,9 @@ export default function AlertsPage() {
               </p>
               {alert.avg_price && (
                 <div style={{ fontSize: '0.875rem', color: '#64748B' }}>
-                  <div>Average Price: R$ {alert.avg_price.toFixed(2)}</div>
+                  <div>Preço Médio: R$ {alert.avg_price.toFixed(2)}</div>
                   {alert.price_variation && (
-                    <div>Price Variation: R$ {alert.price_variation.toFixed(2)}</div>
+                    <div>Variação de Preço: R$ {alert.price_variation.toFixed(2)}</div>
                   )}
                 </div>
               )}
@@ -79,7 +79,7 @@ export default function AlertsPage() {
       ) : (
         <div className="card">
           <p style={{ color: '#64748B', textAlign: 'center' }}>
-            No alerts at this time. System is monitoring for price anomalies.
+            Nenhum alerta no momento. O sistema está monitorando anomalias de preços.
           </p>
         </div>
       )}

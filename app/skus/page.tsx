@@ -16,25 +16,25 @@ export default function SKUsPage() {
         setLoading(false);
       })
       .catch(err => {
-        setError('Failed to load SKUs');
+        setError('Falha ao carregar SKUs');
         setLoading(false);
       });
   }, []);
 
-  if (loading) return <div className="loading">Loading SKUs...</div>;
+  if (loading) return <div className="loading">Carregando SKUs...</div>;
   if (error) return <div className="error">{error}</div>;
 
   return (
     <div className="container" style={{ padding: '40px 20px' }}>
       <header style={{ marginBottom: '40px' }}>
         <Link href="/" style={{ color: '#00D4FF', textDecoration: 'none', marginBottom: '16px', display: 'inline-block' }}>
-          ← Back to Dashboard
+          ← Voltar ao Dashboard
         </Link>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '8px', color: '#00D4FF' }}>
           Top SKUs
         </h1>
         <p style={{ color: '#64748B', fontSize: '1.1rem' }}>
-          Most tracked products by data volume
+          Produtos mais acompanhados por volume de dados
         </p>
       </header>
 
@@ -43,7 +43,7 @@ export default function SKUsPage() {
           <thead>
             <tr>
               <th>SKU</th>
-              <th>Action</th>
+              <th>Ação</th>
             </tr>
           </thead>
           <tbody>
@@ -56,7 +56,7 @@ export default function SKUsPage() {
                     className="btn btn-secondary"
                     style={{ padding: '8px 16px', fontSize: '0.875rem' }}
                   >
-                    View Timeline
+                    Ver Linha do Tempo
                   </Link>
                 </td>
               </tr>

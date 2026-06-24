@@ -27,12 +27,12 @@ export default function MarketplacesPage() {
         setLoading(false);
       })
       .catch(err => {
-        setError('Failed to load marketplaces data');
+        setError('Falha ao carregar dados de marketplaces');
         setLoading(false);
       });
   }, []);
 
-  if (loading) return <div className="loading">Loading marketplaces analysis...</div>;
+  if (loading) return <div className="loading">Carregando análise de marketplaces...</div>;
   if (error) return <div className="error">{error}</div>;
 
   const marketplacesArray = marketplaces ? Object.entries(marketplaces).map(([name, data]) => ({ name, ...data })) : [];
@@ -41,13 +41,13 @@ export default function MarketplacesPage() {
     <div className="container" style={{ padding: '40px 20px' }}>
       <header style={{ marginBottom: '40px' }}>
         <Link href="/" style={{ color: '#00D4FF', textDecoration: 'none', marginBottom: '16px', display: 'inline-block' }}>
-          ← Back to Dashboard
+          ← Voltar ao Dashboard
         </Link>
         <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '8px', color: '#00D4FF' }}>
-          Marketplace Analysis
+          Análise de Marketplaces
         </h1>
         <p style={{ color: '#64748B', fontSize: '1.1rem' }}>
-          Channel performance and coverage
+          Desempenho e cobertura de canais
         </p>
       </header>
 
@@ -56,11 +56,11 @@ export default function MarketplacesPage() {
           <thead>
             <tr>
               <th>Marketplace</th>
-              <th>Records</th>
-              <th>Avg Price</th>
-              <th>Min Price</th>
-              <th>Max Price</th>
-              <th>Brands</th>
+              <th>Registros</th>
+              <th>Preço Médio</th>
+              <th>Preço Mín</th>
+              <th>Preço Máx</th>
+              <th>Marcas</th>
             </tr>
           </thead>
           <tbody>
@@ -72,7 +72,7 @@ export default function MarketplacesPage() {
                 <td>R$ {mp.min_spot_price.toFixed(2)}</td>
                 <td>R$ {mp.max_spot_price.toFixed(2)}</td>
                 <td>
-                  <span className="badge badge-success">{mp.brand_count} brands</span>
+                  <span className="badge badge-success">{mp.brand_count} marcas</span>
                 </td>
               </tr>
             ))}

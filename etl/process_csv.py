@@ -268,17 +268,17 @@ def main():
     # Store in Redis
     print("\nStoring data in Redis...")
     
-    r.setex('dashboard:summary', REDIS_TTL, json.dumps(summary))
-    r.setex('dashboard:brands', REDIS_TTL, json.dumps(results['brands']))
-    r.setex('dashboard:marketplaces', REDIS_TTL, json.dumps(results['marketplaces']))
-    r.setex('dashboard:categories', REDIS_TTL, json.dumps(results['categories']))
-    r.setex('dashboard:alerts', REDIS_TTL, json.dumps(alerts))
-    r.setex('dashboard:top_skus', REDIS_TTL, json.dumps(top_skus))
+    r.set('dashboard:summary', json.dumps(summary), ex=REDIS_TTL)
+    r.set('dashboard:brands', json.dumps(results['brands']), ex=REDIS_TTL)
+    r.set('dashboard:marketplaces', json.dumps(results['marketplaces']), ex=REDIS_TTL)
+    r.set('dashboard:categories', json.dumps(results['categories']), ex=REDIS_TTL)
+    r.set('dashboard:alerts', json.dumps(alerts), ex=REDIS_TTL)
+    r.set('dashboard:top_skus', json.dumps(top_skus), ex=REDIS_TTL)
     
     # Store timeline for top SKUs only (to save memory)
     for sku in top_skus:
         if sku in results['timeline']:
-            r.setex(f'dashboard:timeline:{sku}', REDIS_TTL, json.dumps(results['timeline'][sku]))
+            r.set(f'dashboard:timeline:{sku}', json.dumps(results['timeline'][sku]), ex=REDIS_TTL)
     
     print("ETL process completed successfully!")
     print(f"Summary: {summary}")

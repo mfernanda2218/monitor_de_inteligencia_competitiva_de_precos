@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -21,7 +21,7 @@ interface TimelineData {
   max_price: number;
 }
 
-export default function TimelinePage() {
+function TimelineContent() {
   const searchParams = useSearchParams();
   const sku = searchParams.get('sku') || '';
   const [timeline, setTimeline] = useState<TimelineData[] | null>(null);
@@ -156,5 +156,13 @@ export default function TimelinePage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function TimelinePage() {
+  return (
+    <Suspense fallback={<div className="loading">Carregando linha do tempo...</div>}>
+      <TimelineContent />
+    </Suspense>
   );
 }

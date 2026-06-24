@@ -35,3 +35,6 @@ next-env.d.ts
 
 # CSV data files
 *.csv
+
+
+DEPLOYMENT_RAILWAY.md

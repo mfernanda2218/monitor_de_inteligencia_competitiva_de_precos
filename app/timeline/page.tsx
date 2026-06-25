@@ -67,8 +67,19 @@ function TimelineContent() {
   const maxPrice = timeline && timeline.length > 0 ? Math.max(...timeline.map(t => t.max_price)) : 0;
   const priceVariation = maxPrice - minPrice;
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) {
+      return dateString;
+    }
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
+  };
+
   const chartData = timeline?.map(t => ({
-    date: new Date(t.date).toLocaleDateString('pt-BR'),
+    date: formatDate(t.date),
     avg_price: t.avg_price,
     min_price: t.min_price,
     max_price: t.max_price

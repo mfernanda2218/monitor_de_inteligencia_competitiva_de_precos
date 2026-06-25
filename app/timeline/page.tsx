@@ -67,14 +67,37 @@ function TimelineContent() {
   const maxPrice = timeline && timeline.length > 0 ? Math.max(...timeline.map(t => t.max_price)) : 0;
   const priceVariation = maxPrice - minPrice;
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) {
+  const formatDate = (dateString: string): string => {
+    if (!dateString) return '';
+
+    // Se o backend já enviou dd/mm/yyyy → retorna direto (melhor performance)
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
       return dateString;
     }
+
+    // Tenta converter de outros formatos (YYYY-MM-DD, etc.)
+    let date = new Date(dateString);
+
+    if (isNaN(date.getTime())) {
+      // Tenta split manual se for dd/mm/yyyy com outro separador
+      const parts = dateString.split(/[-/]/);
+      if (parts.length === 3) {
+        if (parts[0].length === 4) { // YYYY-MM-DD
+          date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+        } else { // DD/MM/YYYY
+          date = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+        }
+      }
+    }
+
+    if (isNaN(date.getTime())) {
+      return dateString; // fallback
+    }
+
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const year = date.getFullYear();
+
     return `${day}/${month}/${year}`;
   };
 

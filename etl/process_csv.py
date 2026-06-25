@@ -222,10 +222,18 @@ def finalize_results(results):
         data['brands'] = list(data['brands'])
     
     # Finalize timeline - compute daily averages
+        # Finalize timeline - compute daily averages (com ordenação cronológica correta)
     timeline_final = {}
     for sku, dates in results['timeline'].items():
         timeline_final[sku] = []
-        for date in sorted(dates.keys()):
+        
+        # Ordena as datas corretamente convertendo para objeto date
+        sorted_dates = sorted(
+            dates.keys(), 
+            key=lambda d: datetime.strptime(d, '%d/%m/%Y')
+        )
+        
+        for date in sorted_dates:
             prices = results['timeline'][sku][date]
             if prices:
                 timeline_final[sku].append({

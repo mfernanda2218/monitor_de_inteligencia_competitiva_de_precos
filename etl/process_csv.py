@@ -27,14 +27,20 @@ def format_date(date_value):
     if pd.isna(date_value):
         return None
     try:
+        # Força o parsing tentando formatos comuns
         if isinstance(date_value, str):
-            # Try to parse the date string
-            date_obj = pd.to_datetime(date_value)
+            date_obj = pd.to_datetime(date_value, dayfirst=True, errors='coerce')
+            if pd.isna(date_obj):
+                date_obj = pd.to_datetime(date_value, errors='coerce')
         else:
-            date_obj = pd.to_datetime(date_value)
+            date_obj = pd.to_datetime(date_value, errors='coerce')
+            
+        if pd.isna(date_obj):
+            return str(date_value).strip()
+            
         return date_obj.strftime('%d/%m/%Y')
     except:
-        return str(date_value)
+        return str(date_value).strip()
 
 def process_chunk(chunk):
     """Process a chunk of data and return aggregated metrics"""
@@ -97,7 +103,11 @@ def process_chunk(chunk):
         if pd.isna(sku[0]):
             continue
         sku_key = sku[0]
-        date_key = str(sku[1])
+        date_key = format_date(sku[1])
+
+        if date_key is None:
+            continue
+            
         if sku_key not in results['timeline']:
             results['timeline'][sku_key] = {}
         if date_key not in results['timeline'][sku_key]:
@@ -505,7 +515,13 @@ def main():
     
     # Process CSV in chunks
     total_chunks = 0
-    for chunk in tqdm(pd.read_csv(CSV_PATH, chunksize=CHUNK_SIZE, encoding='utf-8'), desc="Processing chunks"):
+    for chunk in tqdm(pd.read_csv(
+        CSV_PATH, 
+        chunksize=CHUNK_SIZE, 
+        encoding='utf-8',
+        parse_dates=['COLLECTION DATE'],   # ← Adicionado
+        dayfirst=True                      # ← Adicionado (importante para dd/mm)
+    ), desc="Processing chunks"):
         chunk_results = process_chunk(chunk)
         accumulated = merge_results(accumulated, chunk_results)
         total_chunks += 1

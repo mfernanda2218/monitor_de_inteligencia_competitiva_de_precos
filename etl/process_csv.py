@@ -22,6 +22,20 @@ BENCHMARK_BRAND = "MIDEA"
 # Connect to Redis
 r = redis.from_url(REDIS_URL, decode_responses=True)
 
+def format_date(date_value):
+    """Format date to DD/MM/YYYY"""
+    if pd.isna(date_value):
+        return None
+    try:
+        if isinstance(date_value, str):
+            # Try to parse the date string
+            date_obj = pd.to_datetime(date_value)
+        else:
+            date_obj = pd.to_datetime(date_value)
+        return date_obj.strftime('%d/%m/%Y')
+    except:
+        return str(date_value)
+
 def process_chunk(chunk):
     """Process a chunk of data and return aggregated metrics"""
     results = {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { TARGET_BRAND, BENCHMARK_BRAND } from './config/brands';
 
 interface Summary {
   total_records: number;
@@ -99,6 +100,29 @@ export default function Dashboard() {
           em {summary?.total_marketplaces || 0} marketplaces. Use a navegação acima para mergulhar mais fundo em
           desempenho específico de marcas, cobertura de marketplaces e alertas de preços.
         </p>
+      </div>
+
+      <div className="card" style={{ marginTop: '40px', border: '2px solid #00D4FF' }}>
+        <h2 style={{ fontSize: '1.5rem', marginBottom: '20px', color: '#00FF88' }}>⚔️ {TARGET_BRAND} vs {BENCHMARK_BRAND}</h2>
+        <div style={{ color: '#E2E8F0', lineHeight: 1.8 }}>
+          <p style={{ marginBottom: '12px' }}>
+            <strong style={{ color: '#00FF88' }}>Foco:</strong> Análise competitiva focada em {TARGET_BRAND} com {BENCHMARK_BRAND} como benchmark principal
+          </p>
+          <p style={{ marginBottom: '12px' }}>
+            <strong style={{ color: '#FFB800' }}>Objetivo:</strong> Identificar oportunidades de precificação e posicionamento de mercado para {TARGET_BRAND}
+          </p>
+          <p>
+            <strong style={{ color: '#00D4FF' }}>Métricas:</strong> Market share, posicionamento de preço, cobertura de marketplace e tendências competitivas
+          </p>
+        </div>
+        <div style={{ marginTop: '20px', display: 'flex', gap: '12px' }}>
+          <Link href="/brands" className="btn btn-primary">
+            Ver Comparativo Detalhado →
+          </Link>
+          <Link href="/alerts" className="btn btn-secondary">
+            Ver Alertas {TARGET_BRAND} →
+          </Link>
+        </div>
       </div>
     </div>
   );

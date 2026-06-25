@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { TARGET_BRAND, BENCHMARK_BRAND } from '../config/brands';
 
 interface MarketplaceData {
   [key: string]: {
@@ -97,7 +98,8 @@ export default function MarketplacesPage() {
                 <td>R$ {mp.max_spot_price.toFixed(2)}</td>
                 <td>
                   <span className="badge badge-success">{mp.brand_count} marcas</span>
-                  {mp.brands.includes('MIDEA') && <span style={{ marginLeft: '8px', color: '#00FF88', fontSize: '0.75rem' }}>★ MIDEA</span>}
+                  {mp.brands.includes(TARGET_BRAND) && <span style={{ marginLeft: '8px', color: '#00FF88', fontSize: '0.75rem' }}>★ {TARGET_BRAND}</span>}
+                  {mp.brands.includes(BENCHMARK_BRAND) && <span style={{ marginLeft: '8px', color: '#FFB800', fontSize: '0.75rem' }}>★ {BENCHMARK_BRAND}</span>}
                 </td>
               </tr>
             ))}
@@ -115,13 +117,16 @@ export default function MarketplacesPage() {
                   <strong style={{ color: '#00FF88' }}>Marketplace Líder:</strong> {marketplacesArray[0].name} com {marketplacesArray[0].market_share.toFixed(1)}% de market share
                 </p>
                 <p style={{ marginBottom: '12px' }}>
-                  <strong style={{ color: '#00FF88' }}>Cobertura MIDEA:</strong> Presente em {marketplacesArray.filter(mp => mp.brands.includes('MIDEA')).length} de {marketplacesArray.length} marketplaces
+                  <strong style={{ color: '#00FF88' }}>Cobertura {TARGET_BRAND}:</strong> Presente em {marketplacesArray.filter(mp => mp.brands.includes(TARGET_BRAND)).length} de {marketplacesArray.length} marketplaces
+                </p>
+                <p style={{ marginBottom: '12px' }}>
+                  <strong style={{ color: '#FFB800' }}>Cobertura {BENCHMARK_BRAND}:</strong> Presente em {marketplacesArray.filter(mp => mp.brands.includes(BENCHMARK_BRAND)).length} de {marketplacesArray.length} marketplaces
                 </p>
                 <p style={{ marginBottom: '12px' }}>
                   <strong style={{ color: '#00FF88' }}>Preço Médio Global:</strong> R$ {(marketplacesArray.reduce((acc, mp) => acc + mp.avg_spot_price, 0) / marketplacesArray.length).toFixed(2)}
                 </p>
                 <p>
-                  <strong style={{ color: '#00FF88' }}>Marketplaces com MIDEA:</strong> {marketplacesArray.filter(mp => mp.brands.includes('MIDEA')).map(mp => mp.name).join(', ')}
+                  <strong style={{ color: '#00FF88' }}>Marketplaces com {TARGET_BRAND}:</strong> {marketplacesArray.filter(mp => mp.brands.includes(TARGET_BRAND)).map(mp => mp.name).join(', ') || 'Nenhum'}
                 </p>
               </>
             )}
@@ -132,16 +137,16 @@ export default function MarketplacesPage() {
           <h2 style={{ fontSize: '1.5rem', marginBottom: '20px', color: '#00D4FF' }}>Recomendações</h2>
           <div style={{ color: '#E2E8F0', lineHeight: 1.8 }}>
             <p style={{ marginBottom: '12px' }}>
-              • Priorizar marketplaces com market share {'>'} 20% para campanhas promocionais
+              • Priorizar marketplaces com market share {'>'} 20% para campanhas promocionais de {TARGET_BRAND}
             </p>
             <p style={{ marginBottom: '12px' }}>
-              • Expandir presença da MIDEA em marketplaces onde ainda não está presente
+              • Expandir presença de {TARGET_BRAND} em marketplaces onde {BENCHMARK_BRAND} está presente mas {TARGET_BRAND} não
             </p>
             <p style={{ marginBottom: '12px' }}>
-              • Analisar marketplaces com preços médios mais altos para estratégias premium
+              • Analisar marketplaces com preços médios mais altos para estratégias premium de {TARGET_BRAND}
             </p>
             <p>
-              • Monitorar marketplaces com alta variação de preço para detectar promoções competitivas
+              • Monitorar marketplaces com alta variação de preço para detectar promoções competitivas de {BENCHMARK_BRAND}
             </p>
           </div>
         </div>

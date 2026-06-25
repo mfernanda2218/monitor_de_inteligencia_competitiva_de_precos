@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { TARGET_BRAND, BENCHMARK_BRAND } from '../config/brands';
 
 interface BrandData {
   [key: string]: {
@@ -84,9 +85,9 @@ export default function BrandsPage() {
           <tbody>
             {brandsArray.map((brand) => (
               <tr key={brand.name}>
-                <td style={{ fontWeight: 600, color: brand.name.toUpperCase() === 'MIDEA' ? '#00FF88' : '#E2E8F0' }}>
+                <td style={{ fontWeight: 600, color: brand.name.toUpperCase() === TARGET_BRAND.toUpperCase() ? '#00FF88' : '#E2E8F0' }}>
                   {brand.name}
-                  {brand.name.toUpperCase() === 'MIDEA' && <span style={{ marginLeft: '8px', fontSize: '0.75rem' }}>★</span>}
+                  {brand.name.toUpperCase() === TARGET_BRAND.toUpperCase() && <span style={{ marginLeft: '8px', fontSize: '0.75rem' }}>★</span>}
                 </td>
                 <td>
                   <span style={{ 
@@ -119,11 +120,18 @@ export default function BrandsPage() {
                 <p style={{ marginBottom: '12px' }}>
                   <strong style={{ color: '#00FF88' }}>Líder de Mercado:</strong> {brandsArray[0].name} com {brandsArray[0].market_share.toFixed(1)}% de market share
                 </p>
-                {brandsArray.find(b => b.name.toUpperCase() === 'MIDEA') && (
+                {brandsArray.find(b => b.name.toUpperCase() === TARGET_BRAND.toUpperCase()) && (
                   <p style={{ marginBottom: '12px' }}>
-                    <strong style={{ color: '#00FF88' }}>Posição MIDEA:</strong> {
-                      brandsArray.findIndex(b => b.name.toUpperCase() === 'MIDEA') + 1
-                    }º lugar com {brandsArray.find(b => b.name.toUpperCase() === 'MIDEA')?.market_share.toFixed(1)}% de market share
+                    <strong style={{ color: '#00FF88' }}>Posição {TARGET_BRAND}:</strong> {
+                      brandsArray.findIndex(b => b.name.toUpperCase() === TARGET_BRAND.toUpperCase()) + 1
+                    }º lugar com {brandsArray.find(b => b.name.toUpperCase() === TARGET_BRAND.toUpperCase())?.market_share.toFixed(1)}% de market share
+                  </p>
+                )}
+                {brandsArray.find(b => b.name.toUpperCase() === BENCHMARK_BRAND.toUpperCase()) && (
+                  <p style={{ marginBottom: '12px' }}>
+                    <strong style={{ color: '#FFB800' }}>{BENCHMARK_BRAND} (Benchmark):</strong> {
+                      brandsArray.findIndex(b => b.name.toUpperCase() === BENCHMARK_BRAND.toUpperCase()) + 1
+                    }º lugar com {brandsArray.find(b => b.name.toUpperCase() === BENCHMARK_BRAND.toUpperCase())?.market_share.toFixed(1)}% de market share
                   </p>
                 )}
                 <p>
@@ -138,13 +146,13 @@ export default function BrandsPage() {
           <h2 style={{ fontSize: '1.5rem', marginBottom: '20px', color: '#00D4FF' }}>Recomendações</h2>
           <div style={{ color: '#E2E8F0', lineHeight: 1.8 }}>
             <p style={{ marginBottom: '12px' }}>
-              • Focar em marcas com market share {'>'} 10% para análise de benchmark
+              • Monitorar posicionamento de {TARGET_BRAND} vs {BENCHMARK_BRAND} e mercado
             </p>
             <p style={{ marginBottom: '12px' }}>
               • Investigar marcas com alta variação de preço para entender estratégias dinâmicas
             </p>
             <p>
-              • Expandir cobertura de marketplaces para marcas com baixa penetração
+              • Expandir cobertura de marketplaces para {TARGET_BRAND} onde tiver baixa penetração
             </p>
           </div>
         </div>

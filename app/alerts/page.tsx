@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { TARGET_BRAND, BENCHMARK_BRAND } from '../config/brands';
 
 interface Alert {
   type: string;
@@ -13,8 +14,12 @@ interface Alert {
   price_variation?: number;
   market_share?: number;
   premium_vs_min?: number;
-  midea_price?: number;
+  target_price?: number;
   market_min?: number;
+  competitor?: string;
+  target_avg_price?: number;
+  benchmark_avg_price?: number;
+  price_difference_pct?: number;
   market_avg?: number;
   sku?: string;
   trend_direction?: string;
@@ -58,6 +63,8 @@ export default function AlertsPage() {
       case 'price_trend': return '📈';
       case 'coverage': return '🌐';
       case 'category_performance': return '🏆';
+      case 'brand_comparison': return '⚔️';
+      case 'competitor_share': return '🎯';
       default: return 'ℹ️';
     }
   };
@@ -117,13 +124,24 @@ export default function AlertsPage() {
               )}
 
               <div style={{ fontSize: '0.875rem', color: '#64748B', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {alert.midea_price && alert.market_min && (
+                {alert.target_price && alert.market_min && (
                   <>
-                    <div>Preço MIDEA: <span style={{ color: '#00FF88', fontWeight: 600 }}>R$ {alert.midea_price.toFixed(2)}</span></div>
+                    <div>Preço {TARGET_BRAND}: <span style={{ color: '#00FF88', fontWeight: 600 }}>R$ {alert.target_price.toFixed(2)}</span></div>
                     <div>Mínimo Mercado: <span style={{ color: '#E2E8F0' }}>R$ {alert.market_min.toFixed(2)}</span></div>
                     {alert.premium_vs_min && (
                       <div>Premium: <span style={{ color: alert.premium_vs_min > 10 ? '#FF4757' : '#00FF88', fontWeight: 600 }}>
                         {alert.premium_vs_min > 0 ? '+' : ''}{alert.premium_vs_min.toFixed(1)}%
+                      </span></div>
+                    )}
+                  </>
+                )}
+                {alert.target_avg_price && alert.benchmark_avg_price && (
+                  <>
+                    <div>Preço Médio {TARGET_BRAND}: <span style={{ color: '#00FF88', fontWeight: 600 }}>R$ {alert.target_avg_price.toFixed(2)}</span></div>
+                    <div>Preço Médio {BENCHMARK_BRAND}: <span style={{ color: '#FFB800', fontWeight: 600 }}>R$ {alert.benchmark_avg_price.toFixed(2)}</span></div>
+                    {alert.price_difference_pct && (
+                      <div>Diferença: <span style={{ color: alert.price_difference_pct > 5 ? '#FF4757' : alert.price_difference_pct < -5 ? '#00FF88' : '#64748B', fontWeight: 600 }}>
+                        {alert.price_difference_pct > 0 ? '+' : ''}{alert.price_difference_pct.toFixed(1)}%
                       </span></div>
                     )}
                   </>

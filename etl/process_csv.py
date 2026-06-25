@@ -196,7 +196,6 @@ def finalize_results(results):
         data['avg_spot_price'] = np.mean(data['avg_spot_price']) if data['avg_spot_price'] else 0
         data['brand_count'] = len(data['brands'])
         data['brands'] = list(data['brands'])
-        del data['avg_spot_price']
     
     # Finalize timeline - compute daily averages
     timeline_final = {}

@@ -15,6 +15,10 @@ CHUNK_SIZE = 50000
 REDIS_URL = os.getenv('REDIS_URL', 'redis://localhost:6379')
 REDIS_TTL = 86400  # 24 hours
 
+# Brand Configuration
+TARGET_BRAND = "SAMSUNG"
+BENCHMARK_BRAND = "MIDEA"
+
 # Connect to Redis
 r = redis.from_url(REDIS_URL, decode_responses=True)
 
@@ -216,18 +220,18 @@ def generate_alerts(results):
     """Generate competitive intelligence alerts with actionable insights"""
     alerts = []
     
-    # 1. Competitive Price Positioning: MIDEA vs Market per SKU
-    midea_overpriced_skus = []
-    midea_competitive_skus = []
+    # 1. Competitive Price Positioning: TARGET_BRAND vs Market per SKU
+    target_overpriced_skus = []
+    target_competitive_skus = []
     
     for sku, brands in results['sku_prices'].items():
-        if 'MIDEA' in brands and len(brands) > 1:
-            midea_avg = np.mean(brands['MIDEA'])
+        if TARGET_BRAND in brands and len(brands) > 1:
+            target_avg = np.mean(brands[TARGET_BRAND])
             
             # Get minimum price across all competitors
             all_prices = []
             for brand, prices in brands.items():
-                if brand.upper() != 'MIDEA':
+                if brand.upper() != TARGET_BRAND.upper():
                     all_prices.extend(prices)
             
             if all_prices:
@@ -235,13 +239,13 @@ def generate_alerts(results):
                 market_avg = np.mean(all_prices)
                 
                 # Calculate premium percentage
-                premium_vs_min = ((midea_avg - market_min) / market_min) * 100
-                premium_vs_avg = ((midea_avg - market_avg) / market_avg) * 100
+                premium_vs_min = ((target_avg - market_min) / market_min) * 100
+                premium_vs_avg = ((target_avg - market_avg) / market_avg) * 100
                 
                 if premium_vs_min > 10:
-                    midea_overpriced_skus.append({
+                    target_overpriced_skus.append({
                         'sku': sku,
-                        'midea_price': midea_avg,
+                        'target_price': target_avg,
                         'market_min': market_min,
                         'market_avg': market_avg,
                         'premium_vs_min': premium_vs_min,
@@ -249,23 +253,23 @@ def generate_alerts(results):
                         'recommendation': f"Reduzir preço em {premium_vs_min:.1f}% para competir com mínimo de mercado"
                     })
                 elif premium_vs_min < -5:
-                    midea_competitive_skus.append({
+                    target_competitive_skus.append({
                         'sku': sku,
-                        'midea_price': midea_avg,
+                        'target_price': target_avg,
                         'market_min': market_min,
                         'premium_vs_min': premium_vs_min,
                         'insight': "Preço agressivo, considerando aumentar margem"
                     })
     
     # Add top overpriced SKUs to alerts
-    for sku_alert in sorted(midea_overpriced_skus, key=lambda x: x['premium_vs_min'], reverse=True)[:5]:
+    for sku_alert in sorted(target_overpriced_skus, key=lambda x: x['premium_vs_min'], reverse=True)[:5]:
         alerts.append({
             'type': 'price_gap',
-            'brand': 'MIDEA',
+            'brand': TARGET_BRAND,
             'severity': 'danger',
             'sku': sku_alert['sku'],
             'message': f"SKU {sku_alert['sku'][:20]}... está {sku_alert['premium_vs_min']:.1f}% acima do mínimo de mercado",
-            'midea_price': sku_alert['midea_price'],
+            'target_price': sku_alert['target_price'],
             'market_min': sku_alert['market_min'],
             'market_avg': sku_alert['market_avg'],
             'premium_vs_min': sku_alert['premium_vs_min'],
@@ -287,33 +291,50 @@ def generate_alerts(results):
     
     brand_market_share.sort(key=lambda x: x['share'], reverse=True)
     
-    # Alert if MIDEA market share is concerning
-    midea_share = next((x for x in brand_market_share if x['brand'].upper() == 'MIDEA'), None)
-    if midea_share:
-        if midea_share['share'] < 5:
+    # Alert for TARGET_BRAND market share
+    target_share = next((x for x in brand_market_share if x['brand'].upper() == TARGET_BRAND.upper()), None)
+    if target_share:
+        target_rank = next((i + 1 for i, x in enumerate(brand_market_share) if x['brand'].upper() == TARGET_BRAND.upper()), None)
+        if target_share['share'] < 5:
             alerts.append({
                 'type': 'market_share',
-                'brand': 'MIDEA',
+                'brand': TARGET_BRAND,
                 'severity': 'warning',
-                'message': f"Market share de MIDEA é baixo: {midea_share['share']:.1f}% ({midea_share['count']:,} registros)",
-                'market_share': midea_share['share'],
+                'message': f"Market share de {TARGET_BRAND} é baixo: {target_share['share']:.1f}% ({target_share['count']:,} registros) - {target_rank}º lugar",
+                'market_share': target_share['share'],
+                'rank': target_rank,
                 'recommendation': 'Investigar penetração por categoria e marketplace'
             })
         else:
             alerts.append({
                 'type': 'market_share',
-                'brand': 'MIDEA',
+                'brand': TARGET_BRAND,
                 'severity': 'success',
-                'message': f"Market share de MIDEA: {midea_share['share']:.1f}% ({midea_share['count']:,} registros)",
-                'market_share': midea_share['share'],
+                'message': f"Market share de {TARGET_BRAND}: {target_share['share']:.1f}% ({target_share['count']:,} registros) - {target_rank}º lugar",
+                'market_share': target_share['share'],
+                'rank': target_rank,
                 'recommendation': 'Manter estratégia atual'
             })
     
+    # Add benchmark brand (MIDEA) market share as reference
+    benchmark_share = next((x for x in brand_market_share if x['brand'].upper() == BENCHMARK_BRAND.upper()), None)
+    if benchmark_share:
+        benchmark_rank = next((i + 1 for i, x in enumerate(brand_market_share) if x['brand'].upper() == BENCHMARK_BRAND.upper()), None)
+        alerts.append({
+            'type': 'competitor_share',
+            'brand': BENCHMARK_BRAND,
+            'severity': 'info',
+            'message': f"{BENCHMARK_BRAND} tem {benchmark_share['share']:.1f}% de market share (concorrente principal) - {benchmark_rank}º lugar",
+            'market_share': benchmark_share['share'],
+            'rank': benchmark_rank,
+            'is_competitor': True
+        })
+    
     # 3. Price Trend Analysis (from timeline data)
-    # Calculate overall price trend for MIDEA
-    midea_trend_alerts = []
+    # Calculate overall price trend for TARGET_BRAND
+    target_trend_alerts = []
     for sku in results['timeline']:
-        if sku in results['sku_prices'] and 'MIDEA' in results['sku_prices'][sku]:
+        if sku in results['sku_prices'] and TARGET_BRAND in results['sku_prices'][sku]:
             timeline_data = results['timeline'][sku]
             if len(timeline_data) >= 2:
                 # Calculate trend between first and last data points
@@ -324,7 +345,7 @@ def generate_alerts(results):
                     price_change = ((last_price - first_price) / first_price) * 100
                     
                     if price_change > 10:
-                        midea_trend_alerts.append({
+                        target_trend_alerts.append({
                             'sku': sku,
                             'trend': 'increasing',
                             'change': price_change,
@@ -332,7 +353,7 @@ def generate_alerts(results):
                             'last_price': last_price
                         })
                     elif price_change < -10:
-                        midea_trend_alerts.append({
+                        target_trend_alerts.append({
                             'sku': sku,
                             'trend': 'decreasing',
                             'change': price_change,
@@ -341,14 +362,14 @@ def generate_alerts(results):
                         })
     
     # Add trend alerts
-    if midea_trend_alerts:
-        increasing_count = len([x for x in midea_trend_alerts if x['trend'] == 'increasing'])
-        decreasing_count = len([x for x in midea_trend_alerts if x['trend'] == 'decreasing'])
+    if target_trend_alerts:
+        increasing_count = len([x for x in target_trend_alerts if x['trend'] == 'increasing'])
+        decreasing_count = len([x for x in target_trend_alerts if x['trend'] == 'decreasing'])
         
         if increasing_count > decreasing_count:
             alerts.append({
                 'type': 'price_trend',
-                'brand': 'MIDEA',
+                'brand': TARGET_BRAND,
                 'severity': 'warning',
                 'message': f"Tendência de alta em preços: {increasing_count} SKUs com aumento >10%",
                 'trend_direction': 'increasing',
@@ -357,32 +378,32 @@ def generate_alerts(results):
         elif decreasing_count > increasing_count:
             alerts.append({
                 'type': 'price_trend',
-                'brand': 'MIDEA',
+                'brand': TARGET_BRAND,
                 'severity': 'info',
                 'message': f"Tendência de baixa em preços: {decreasing_count} SKUs com redução >10%",
                 'trend_direction': 'decreasing',
                 'recommendation': 'Avaliar estratégia de precificação competitiva'
             })
     
-    # 4. Marketplace Coverage Analysis
+    # 4. Marketplace Coverage Analysis for TARGET_BRAND
     for brand, data in results['brands'].items():
-        if brand.upper() == 'MIDEA':
+        if brand.upper() == TARGET_BRAND.upper():
             if data['marketplace_coverage'] < len(results['marketplaces']):
                 missing_marketplaces = len(results['marketplaces']) - data['marketplace_coverage']
                 alerts.append({
                     'type': 'coverage',
-                    'brand': 'MIDEA',
+                    'brand': TARGET_BRAND,
                     'severity': 'warning',
-                    'message': f"MIDEA não está presente em {missing_marketplaces} marketplace(s)",
+                    'message': f"{TARGET_BRAND} não está presente em {missing_marketplaces} marketplace(s)",
                     'current_coverage': data['marketplace_coverage'],
                     'total_marketplaces': len(results['marketplaces']),
                     'recommendation': 'Expandir presença para marketplaces faltantes'
                 })
     
-    # 5. Category Performance
+    # 5. Category Performance for TARGET_BRAND
     category_insights = []
     for cat, data in results['categories'].items():
-        if 'MIDEA' in data['brands']:
+        if TARGET_BRAND in data['brands']:
             category_insights.append({
                 'category': cat,
                 'brand_count': data['brand_count'],
@@ -393,12 +414,56 @@ def generate_alerts(results):
         best_category = max(category_insights, key=lambda x: x['brand_count'])
         alerts.append({
             'type': 'category_performance',
-            'brand': 'MIDEA',
+            'brand': TARGET_BRAND,
             'severity': 'success',
             'message': f"Melhor categoria: {best_category['category']} com {best_category['brand_count']} marcas",
             'category': best_category['category'],
             'recommendation': 'Focar recursos em categorias de alto desempenho'
         })
+    
+    # 6. TARGET_BRAND vs BENCHMARK_BRAND Comparison
+    target_brand_data = results['brands'].get(TARGET_BRAND)
+    benchmark_brand_data = results['brands'].get(BENCHMARK_BRAND)
+    
+    if target_brand_data and benchmark_brand_data:
+        price_diff_pct = ((target_brand_data['avg_spot_price'] - benchmark_brand_data['avg_spot_price']) / benchmark_brand_data['avg_spot_price']) * 100
+        
+        if price_diff_pct > 5:
+            alerts.append({
+                'type': 'brand_comparison',
+                'brand': TARGET_BRAND,
+                'competitor': BENCHMARK_BRAND,
+                'severity': 'warning',
+                'message': f"{TARGET_BRAND} está {price_diff_pct:.1f}% acima do {BENCHMARK_BRAND} em preço médio",
+                'target_avg_price': target_brand_data['avg_spot_price'],
+                'benchmark_avg_price': benchmark_brand_data['avg_spot_price'],
+                'price_difference_pct': price_diff_pct,
+                'recommendation': f"{TARGET_BRAND} pode reduzir preço em {price_diff_pct:.1f}% para competir com {BENCHMARK_BRAND}"
+            })
+        elif price_diff_pct < -5:
+            alerts.append({
+                'type': 'brand_comparison',
+                'brand': TARGET_BRAND,
+                'competitor': BENCHMARK_BRAND,
+                'severity': 'success',
+                'message': f"{TARGET_BRAND} está {abs(price_diff_pct):.1f}% abaixo do {BENCHMARK_BRAND} em preço médio",
+                'target_avg_price': target_brand_data['avg_spot_price'],
+                'benchmark_avg_price': benchmark_brand_data['avg_spot_price'],
+                'price_difference_pct': price_diff_pct,
+                'recommendation': f"{TARGET_BRAND} tem vantagem de preço sobre {BENCHMARK_BRAND}"
+            })
+        else:
+            alerts.append({
+                'type': 'brand_comparison',
+                'brand': TARGET_BRAND,
+                'competitor': BENCHMARK_BRAND,
+                'severity': 'info',
+                'message': f"{TARGET_BRAND} e {BENCHMARK_BRAND} têm preços similares (diferença de {abs(price_diff_pct):.1f}%)",
+                'target_avg_price': target_brand_data['avg_spot_price'],
+                'benchmark_avg_price': benchmark_brand_data['avg_spot_price'],
+                'price_difference_pct': price_diff_pct,
+                'recommendation': 'Monitorar dinâmica competitiva'
+            })
     
     return alerts
 

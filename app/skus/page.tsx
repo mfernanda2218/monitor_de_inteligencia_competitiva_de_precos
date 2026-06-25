@@ -1,7 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
+import PageHeader from '../components/layout/PageHeader';
+import AnalyticsTable from '../components/ui/AnalyticsTable';
+import Button from '../components/ui/Button';
+import DashboardCard from '../components/ui/DashboardCard';
+import KPIWidget from '../components/ui/KPIWidget';
+import LoadingState from '../components/shared/LoadingState';
+import ErrorState from '../components/shared/ErrorState';
 
 export default function SKUsPage() {
   const [skus, setSkus] = useState<string[] | null>(null);
@@ -21,49 +27,66 @@ export default function SKUsPage() {
       });
   }, []);
 
-  if (loading) return <div className="loading">Carregando SKUs...</div>;
-  if (error) return <div className="error">{error}</div>;
+  if (loading) return <LoadingState message="Carregando SKUs..." />;
+  if (error) return <ErrorState message={error} />;
+
+  const tableColumns = [
+    {
+      key: 'sku',
+      header: 'SKU',
+      render: (value: string) => (
+        <span style={{ fontWeight: 600, color: '#111827' }}>
+          {value}
+        </span>
+      )
+    },
+    {
+      key: 'action',
+      header: 'Ação',
+      align: 'center' as const,
+      render: (value: string, row: any) => (
+        <Button
+          href={`/timeline?sku=${row.sku}`}
+          variant="secondary"
+          size="sm"
+        >
+          Ver Linha do Tempo
+        </Button>
+      )
+    }
+  ];
+
+  const tableData = skus?.map(sku => ({ sku })) || [];
 
   return (
-    <div className="container" style={{ padding: '40px 20px' }}>
-      <header style={{ marginBottom: '40px' }}>
-        <Link href="/" style={{ color: '#00D4FF', textDecoration: 'none', marginBottom: '16px', display: 'inline-block' }}>
-          ← Voltar ao Dashboard
-        </Link>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '8px', color: '#00D4FF' }}>
-          Top SKUs
-        </h1>
-        <p style={{ color: '#64748B', fontSize: '1.1rem' }}>
-          Produtos mais acompanhados por volume de dados
-        </p>
-      </header>
+    <div className="container" style={{ padding: '32px 20px' }}>
+      <PageHeader
+        title="Top SKUs"
+        subtitle="Produtos mais acompanhados por volume de dados"
+        breadcrumb={{ label: 'Voltar ao Dashboard', href: '/' }}
+      />
 
-      <div className="card" style={{ marginBottom: '40px' }}>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>SKU</th>
-              <th>Ação</th>
-            </tr>
-          </thead>
-          <tbody>
-            {skus?.map((sku, index) => (
-              <tr key={sku}>
-                <td style={{ fontWeight: 600, color: '#00FF88' }}>{sku}</td>
-                <td>
-                  <Link 
-                    href={`/timeline?sku=${sku}`}
-                    className="btn btn-secondary"
-                    style={{ padding: '8px 16px', fontSize: '0.875rem' }}
-                  >
-                    Ver Linha do Tempo
-                  </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="grid grid-2" style={{ marginBottom: '32px' }}>
+        <KPIWidget
+          title="Total de SKUs"
+          value={skus?.length || 0}
+          color="primary"
+        />
+        {skus && skus.length > 0 && (
+          <KPIWidget
+            title="Mais Monitorado"
+            value={skus[0]}
+            color="success"
+          />
+        )}
       </div>
+
+      <DashboardCard>
+        <AnalyticsTable
+          columns={tableColumns}
+          data={tableData}
+        />
+      </DashboardCard>
     </div>
   );
 }

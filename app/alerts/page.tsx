@@ -1,30 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { TARGET_BRAND, BENCHMARK_BRAND } from '../config/brands';
-
-interface Alert {
-  type: string;
-  brand: string;
-  severity: string;
-  message: string;
-  recommendation?: string;
-  avg_price?: number;
-  price_variation?: number;
-  market_share?: number;
-  premium_vs_min?: number;
-  target_price?: number;
-  market_min?: number;
-  competitor?: string;
-  target_avg_price?: number;
-  benchmark_avg_price?: number;
-  price_difference_pct?: number;
-  market_avg?: number;
-  sku?: string;
-  trend_direction?: string;
-  category?: string;
-}
+import PageHeader from '../components/layout/PageHeader';
+import AlertPanel, { Alert } from '../components/ui/AlertPanel';
+import DashboardCard from '../components/ui/DashboardCard';
+import KPIWidget from '../components/ui/KPIWidget';
+import LoadingState from '../components/shared/LoadingState';
+import ErrorState from '../components/shared/ErrorState';
 
 export default function AlertsPage() {
   const [alerts, setAlerts] = useState<Alert[] | null>(null);
@@ -44,135 +27,185 @@ export default function AlertsPage() {
       });
   }, []);
 
-  if (loading) return <div className="loading">Carregando inteligência competitiva...</div>;
-  if (error) return <div className="error">{error}</div>;
+  if (loading) return <LoadingState message="Carregando inteligência competitiva..." />;
+  if (error) return <ErrorState message={error} />;
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'danger': return '#FF4757';
-      case 'warning': return '#FFB800';
-      case 'success': return '#00FF88';
-      default: return '#00D4FF';
-    }
-  };
+  const dangerAlerts = alerts?.filter(a => a.severity === 'danger').length || 0;
+  const warningAlerts = alerts?.filter(a => a.severity === 'warning').length || 0;
+  const successAlerts = alerts?.filter(a => a.severity === 'success').length || 0;
 
-  const getAlertIcon = (type: string) => {
-    switch (type) {
-      case 'price_gap': return '⚠️';
-      case 'market_share': return '📊';
-      case 'price_trend': return '📈';
-      case 'coverage': return '🌐';
-      case 'category_performance': return '🏆';
-      case 'brand_comparison': return '⚔️';
-      case 'competitor_share': return '🎯';
-      default: return 'ℹ️';
+  const convertedAlerts = alerts?.map((alert: any, index: number) => ({
+    id: String(index),
+    type: alert.type,
+    severity: alert.severity,
+    title: alert.brand,
+    description: alert.message,
+    timestamp: alert.sku ? `SKU: ${alert.sku}` : undefined,
+    metadata: {
+      recommendation: alert.recommendation,
+      target_price: alert.target_price,
+      market_min: alert.market_min,
+      premium_vs_min: alert.premium_vs_min,
+      target_avg_price: alert.target_avg_price,
+      benchmark_avg_price: alert.benchmark_avg_price,
+      price_difference_pct: alert.price_difference_pct,
+      market_share: alert.market_share,
+      avg_price: alert.avg_price,
+      price_variation: alert.price_variation,
+      trend_direction: alert.trend_direction,
+      category: alert.category
     }
-  };
+  })) || [];
 
   return (
-    <div className="container" style={{ padding: '40px 20px' }}>
-      <header style={{ marginBottom: '40px' }}>
-        <Link href="/" style={{ color: '#00D4FF', textDecoration: 'none', marginBottom: '16px', display: 'inline-block' }}>
-          ← Voltar ao Dashboard
-        </Link>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '8px', color: '#00D4FF' }}>
-          Inteligência Competitiva
-        </h1>
-        <p style={{ color: '#64748B', fontSize: '1.1rem' }}>
-          Insights acionáveis para tomada de decisão estratégica
-        </p>
-      </header>
+    <div className="container" style={{ padding: '32px 20px' }}>
+      <PageHeader
+        title="Inteligência Competitiva"
+        subtitle="Insights acionáveis para tomada de decisão estratégica"
+        breadcrumb={{ label: 'Voltar ao Dashboard', href: '/' }}
+      />
 
-      {alerts && alerts.length > 0 ? (
-        <div className="grid grid-2">
-          {alerts.map((alert, index) => (
-            <div key={index} className="card" style={{ borderLeft: `4px solid ${getSeverityColor(alert.severity)}` }}>
-              <div style={{ marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '1.5rem' }}>{getAlertIcon(alert.type)}</span>
-                <span className={`badge badge-${alert.severity === 'danger' ? 'danger' : alert.severity === 'warning' ? 'warning' : 'success'}`}>
-                  {alert.severity.toUpperCase()}
-                </span>
-                <span style={{ marginLeft: '8px', color: '#64748B', fontSize: '0.875rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  {alert.type.replace('_', ' ')}
-                </span>
+      <div className="grid grid-3" style={{ marginBottom: '32px' }}>
+        <KPIWidget
+          title="Total de Alertas"
+          value={alerts?.length || 0}
+          color="primary"
+        />
+        <KPIWidget
+          title="Críticos"
+          value={dangerAlerts}
+          color="danger"
+        />
+        <KPIWidget
+          title="Oportunidades"
+          value={successAlerts}
+          color="success"
+        />
+      </div>
+
+      <div className="grid grid-70-30" style={{ marginBottom: '32px' }}>
+        <DashboardCard title="Alertas Recentes">
+          <AlertPanel 
+            alerts={convertedAlerts}
+            maxItems={10}
+            onAlertClick={(alert) => console.log('Alert clicked:', alert)}
+          />
+        </DashboardCard>
+
+        <DashboardCard title="Resumo por Severidade">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{
+              padding: '16px',
+              borderRadius: '8px',
+              background: '#FEE2E2',
+              border: '1px solid #FECACA'
+            }}>
+              <div style={{ fontSize: '0.75rem', color: '#DC2626', fontWeight: 600, marginBottom: '4px' }}>
+                CRÍTICOS
               </div>
-
-              <h3 style={{ fontSize: '1.25rem', marginBottom: '8px', color: '#00FF88', fontWeight: 600 }}>
-                {alert.brand}
-                {alert.sku && <span style={{ fontSize: '0.875rem', color: '#64748B', marginLeft: '8px' }}>• {alert.sku}</span>}
-              </h3>
-
-              <p style={{ color: '#E2E8F0', marginBottom: '16px', lineHeight: 1.6 }}>
-                {alert.message}
-              </p>
-
-              {alert.recommendation && (
-                <div style={{
-                  background: 'rgba(0, 212, 255, 0.1)',
-                  border: '1px solid rgba(0, 212, 255, 0.3)',
-                  borderRadius: '8px',
-                  padding: '12px',
-                  marginBottom: '16px'
-                }}>
-                  <div style={{ fontSize: '0.75rem', color: '#00D4FF', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
-                    💡 Recomendação
-                  </div>
-                  <div style={{ fontSize: '0.9rem', color: '#E2E8F0' }}>
-                    {alert.recommendation}
-                  </div>
-                </div>
-              )}
-
-              <div style={{ fontSize: '0.875rem', color: '#64748B', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                {alert.target_price && alert.market_min && (
-                  <>
-                    <div>Preço {TARGET_BRAND}: <span style={{ color: '#00FF88', fontWeight: 600 }}>R$ {alert.target_price.toFixed(2)}</span></div>
-                    <div>Mínimo Mercado: <span style={{ color: '#E2E8F0' }}>R$ {alert.market_min.toFixed(2)}</span></div>
-                    {alert.premium_vs_min && (
-                      <div>Premium: <span style={{ color: alert.premium_vs_min > 10 ? '#FF4757' : '#00FF88', fontWeight: 600 }}>
-                        {alert.premium_vs_min > 0 ? '+' : ''}{alert.premium_vs_min.toFixed(1)}%
-                      </span></div>
-                    )}
-                  </>
-                )}
-                {alert.target_avg_price && alert.benchmark_avg_price && (
-                  <>
-                    <div>Preço Médio {TARGET_BRAND}: <span style={{ color: '#00FF88', fontWeight: 600 }}>R$ {alert.target_avg_price.toFixed(2)}</span></div>
-                    <div>Preço Médio {BENCHMARK_BRAND}: <span style={{ color: '#FFB800', fontWeight: 600 }}>R$ {alert.benchmark_avg_price.toFixed(2)}</span></div>
-                    {alert.price_difference_pct && (
-                      <div>Diferença: <span style={{ color: alert.price_difference_pct > 5 ? '#FF4757' : alert.price_difference_pct < -5 ? '#00FF88' : '#64748B', fontWeight: 600 }}>
-                        {alert.price_difference_pct > 0 ? '+' : ''}{alert.price_difference_pct.toFixed(1)}%
-                      </span></div>
-                    )}
-                  </>
-                )}
-                {alert.market_share && (
-                  <div>Market Share: <span style={{ color: '#00D4FF', fontWeight: 600 }}>{alert.market_share.toFixed(1)}%</span></div>
-                )}
-                {alert.avg_price && (
-                  <div>Preço Médio: <span style={{ color: '#E2E8F0' }}>R$ {alert.avg_price.toFixed(2)}</span></div>
-                )}
-                {alert.price_variation && (
-                  <div>Variação: <span style={{ color: '#E2E8F0' }}>R$ {alert.price_variation.toFixed(2)}</span></div>
-                )}
-                {alert.trend_direction && (
-                  <div>Tendência: <span style={{ color: alert.trend_direction === 'increasing' ? '#FF4757' : '#00FF88', fontWeight: 600 }}>
-                    {alert.trend_direction === 'increasing' ? '📈 Alta' : '📉 Baixa'}
-                  </span></div>
-                )}
-                {alert.category && (
-                  <div>Categoria: <span style={{ color: '#00D4FF', fontWeight: 600 }}>{alert.category}</span></div>
-                )}
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: '#DC2626' }}>
+                {dangerAlerts}
               </div>
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="card">
-          <p style={{ color: '#64748B', textAlign: 'center', fontSize: '1.1rem' }}>
-            Nenhum alerta no momento. O sistema está monitorando anomalias de preços.
-          </p>
-        </div>
+            <div style={{
+              padding: '16px',
+              borderRadius: '8px',
+              background: '#FEF3C7',
+              border: '1px solid #FDE68A'
+            }}>
+              <div style={{ fontSize: '0.75rem', color: '#D97706', fontWeight: 600, marginBottom: '4px' }}>
+                ATENÇÃO
+              </div>
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: '#D97706' }}>
+                {warningAlerts}
+              </div>
+            </div>
+            <div style={{
+              padding: '16px',
+              borderRadius: '8px',
+              background: '#DCFCE7',
+              border: '1px solid #BBF7D0'
+            }}>
+              <div style={{ fontSize: '0.75rem', color: '#059669', fontWeight: 600, marginBottom: '4px' }}>
+                POSITIVOS
+              </div>
+              <div style={{ fontSize: '2rem', fontWeight: 700, color: '#059669' }}>
+                {successAlerts}
+              </div>
+            </div>
+          </div>
+        </DashboardCard>
+      </div>
+
+      {alerts && alerts.length > 0 && (
+        <DashboardCard title="Detalhes dos Alertas">
+          <div className="grid grid-2">
+            {alerts.map((alert: any, index: number) => (
+              <div
+                key={index}
+                style={{
+                  padding: '20px',
+                  borderRadius: '8px',
+                  background: '#F9FAFB',
+                  border: '1px solid #E5E7EB',
+                  borderLeft: `4px solid ${
+                    alert.severity === 'danger' ? '#DC2626' : 
+                    alert.severity === 'warning' ? '#D97706' : '#059669'
+                  }`
+                }}
+              >
+                <div style={{ marginBottom: '12px' }}>
+                  <div style={{ fontSize: '0.875rem', color: '#6B7280', marginBottom: '4px' }}>
+                    {alert.brand}
+                    {alert.sku && <span style={{ marginLeft: '8px' }}>• {alert.sku}</span>}
+                  </div>
+                  <div style={{ fontSize: '1rem', fontWeight: 600, color: '#111827' }}>
+                    {alert.message}
+                  </div>
+                </div>
+
+                {alert.recommendation && (
+                  <div style={{
+                    padding: '12px',
+                    borderRadius: '6px',
+                    background: '#EFF6FF',
+                    border: '1px solid #DBEAFE',
+                    marginBottom: '12px'
+                  }}>
+                    <div style={{ fontSize: '0.75rem', color: '#2563EB', fontWeight: 600, marginBottom: '4px' }}>
+                      💡 Recomendação
+                    </div>
+                    <div style={{ fontSize: '0.875rem', color: '#1E40AF' }}>
+                      {alert.recommendation}
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ fontSize: '0.875rem', color: '#6B7280' }}>
+                  {alert.target_price && alert.market_min && (
+                    <div style={{ marginBottom: '4px' }}>
+                      <span>Preço {TARGET_BRAND}: </span>
+                      <span style={{ color: '#059669', fontWeight: 600 }}>R$ {alert.target_price.toFixed(2)}</span>
+                      <span style={{ marginLeft: '8px' }}>| Mínimo: R$ {alert.market_min.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {alert.market_share && (
+                    <div style={{ marginBottom: '4px' }}>
+                      <span>Market Share: </span>
+                      <span style={{ color: '#2563EB', fontWeight: 600 }}>{alert.market_share.toFixed(1)}%</span>
+                    </div>
+                  )}
+                  {alert.category && (
+                    <div>
+                      <span>Categoria: </span>
+                      <span style={{ color: '#2563EB', fontWeight: 600 }}>{alert.category}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </DashboardCard>
       )}
     </div>
   );

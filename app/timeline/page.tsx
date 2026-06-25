@@ -2,17 +2,14 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer
-} from 'recharts';
+import PageHeader from '../components/layout/PageHeader';
+import ChartCard from '../components/ui/ChartCard';
+import DashboardCard from '../components/ui/DashboardCard';
+import KPIWidget from '../components/ui/KPIWidget';
+import MetricIndicator from '../components/ui/MetricIndicator';
+import LoadingState from '../components/shared/LoadingState';
+import ErrorState from '../components/shared/ErrorState';
+import PriceLineChart from '../components/charts/PriceLineChart';
 
 interface TimelineData {
   date: string;
@@ -30,13 +27,11 @@ function TimelineContent() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Load top SKUs for dropdown
     fetch('/api/top_skus')
       .then(res => res.json())
       .then(data => {
         setTopSkus(data);
         if (!sku && data.length > 0) {
-          // Load first SKU if none selected
           loadTimeline(data[0]);
         } else if (sku) {
           loadTimeline(sku);
@@ -64,96 +59,89 @@ function TimelineContent() {
       });
   };
 
-  if (loading) return <div className="loading">Carregando linha do tempo...</div>;
-  if (error) return <div className="error">{error}</div>;
+  if (loading) return <LoadingState message="Carregando linha do tempo..." />;
+  if (error) return <ErrorState message={error} />;
+
+  const currentPrice = timeline && timeline.length > 0 ? timeline[timeline.length - 1].avg_price : 0;
+  const minPrice = timeline && timeline.length > 0 ? Math.min(...timeline.map(t => t.min_price)) : 0;
+  const maxPrice = timeline && timeline.length > 0 ? Math.max(...timeline.map(t => t.max_price)) : 0;
+  const priceVariation = maxPrice - minPrice;
+
+  const chartData = timeline?.map(t => ({
+    date: new Date(t.date).toLocaleDateString('pt-BR'),
+    avg_price: t.avg_price,
+    min_price: t.min_price,
+    max_price: t.max_price
+  })) || [];
+
+  const chartLines = [
+    { dataKey: 'avg_price', name: 'Preço Médio', color: '#2563EB' },
+    { dataKey: 'min_price', name: 'Preço Mínimo', color: '#059669' },
+    { dataKey: 'max_price', name: 'Preço Máximo', color: '#D97706' }
+  ];
 
   return (
-    <div className="container" style={{ padding: '40px 20px' }}>
-      <header style={{ marginBottom: '40px' }}>
-        <Link href="/" style={{ color: '#00D4FF', textDecoration: 'none', marginBottom: '16px', display: 'inline-block' }}>
-          ← Voltar ao Dashboard
-        </Link>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '8px', color: '#00D4FF' }}>
-          Linha do Tempo de Preços
-        </h1>
-        <p style={{ color: '#64748B', fontSize: '1.1rem' }}>
-          Evolução histórica de preços por SKU
-        </p>
-      </header>
+    <div className="container" style={{ padding: '32px 20px' }}>
+      <PageHeader
+        title="Linha do Tempo de Preços"
+        subtitle="Evolução histórica de preços por SKU"
+        breadcrumb={{ label: 'Voltar ao Dashboard', href: '/' }}
+      />
 
-      <div className="card" style={{ marginBottom: '24px' }}>
-        <label style={{ display: 'block', marginBottom: '8px', color: '#E2E8F0' }}>
-          Selecionar SKU:
-        </label>
-        <select
-          value={sku}
-          onChange={(e) => loadTimeline(e.target.value)}
-          style={{
-            width: '100%',
-            padding: '12px',
-            background: '#1A1F2E',
-            border: '1px solid #2D3748',
-            borderRadius: '8px',
-            color: '#E2E8F0',
-            fontSize: '1rem'
-          }}
-        >
-          {topSkus?.map(s => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-      </div>
+      <DashboardCard style={{ marginBottom: '32px' }}>
+        <div style={{ marginBottom: '12px' }}>
+          <label style={{ display: 'block', marginBottom: '8px', color: '#374151', fontWeight: 500 }}>
+            Selecionar SKU:
+          </label>
+          <select
+            value={sku}
+            onChange={(e) => loadTimeline(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '12px',
+              background: '#FFFFFF',
+              border: '1px solid #E5E7EB',
+              borderRadius: '8px',
+              color: '#111827',
+              fontSize: '1rem',
+              cursor: 'pointer'
+            }}
+          >
+            {topSkus?.map(s => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        </div>
+      </DashboardCard>
 
       {timeline && timeline.length > 0 && (
-        <div className="card">
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '20px', color: '#00D4FF' }}>
-            Evolução de Preço: {sku}
-          </h2>
-          <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={timeline}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#2D3748" />
-              <XAxis 
-                dataKey="date" 
-                stroke="#64748B"
-                tick={{ fill: '#64748B' }}
-              />
-              <YAxis 
-                stroke="#64748B"
-                tick={{ fill: '#64748B' }}
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  background: '#1A1F2E', 
-                  border: '1px solid #2D3748',
-                  borderRadius: '8px',
-                  color: '#E2E8F0'
-                }}
-              />
-              <Legend />
-              <Line 
-                type="monotone" 
-                dataKey="avg_price" 
-                stroke="#00D4FF" 
-                strokeWidth={2}
-                name="Preço Médio"
-              />
-              <Line 
-                type="monotone" 
-                dataKey="min_price" 
-                stroke="#00FF88" 
-                strokeWidth={2}
-                name="Preço Mínimo"
-              />
-              <Line 
-                type="monotone" 
-                dataKey="max_price" 
-                stroke="#FFB800" 
-                strokeWidth={2}
-                name="Preço Máximo"
-              />
-            </LineChart>
-          </ResponsiveContainer>
-        </div>
+        <>
+          <ChartCard title={`Evolução de Preço: ${sku}`} style={{ marginBottom: '32px' }}>
+            <PriceLineChart
+              data={chartData}
+              lines={chartLines}
+              height={400}
+            />
+          </ChartCard>
+
+          <div className="grid grid-3">
+            <KPIWidget
+              title="Preço Atual"
+              value={`R$ ${currentPrice.toFixed(2)}`}
+              color="primary"
+            />
+            <KPIWidget
+              title="Menor Preço"
+              value={`R$ ${minPrice.toFixed(2)}`}
+              color="success"
+            />
+            <KPIWidget
+              title="Variação do Período"
+              value={`R$ ${priceVariation.toFixed(2)}`}
+              color="warning"
+            />
+          </div>
+        </>
       )}
     </div>
   );
@@ -161,7 +149,7 @@ function TimelineContent() {
 
 export default function TimelinePage() {
   return (
-    <Suspense fallback={<div className="loading">Carregando linha do tempo...</div>}>
+    <Suspense fallback={<LoadingState message="Carregando linha do tempo..." />}>
       <TimelineContent />
     </Suspense>
   );

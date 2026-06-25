@@ -1,8 +1,14 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { TARGET_BRAND, BENCHMARK_BRAND } from '../config/brands';
+import PageHeader from '../components/layout/PageHeader';
+import AnalyticsTable from '../components/ui/AnalyticsTable';
+import StatusBadge from '../components/ui/StatusBadge';
+import DashboardCard from '../components/ui/DashboardCard';
+import KPIWidget from '../components/ui/KPIWidget';
+import LoadingState from '../components/shared/LoadingState';
+import ErrorState from '../components/shared/ErrorState';
 
 interface MarketplaceData {
   [key: string]: {
@@ -41,8 +47,8 @@ export default function MarketplacesPage() {
       });
   }, []);
 
-  if (loading) return <div className="loading">Carregando análise de marketplaces...</div>;
-  if (error) return <div className="error">{error}</div>;
+  if (loading) return <LoadingState message="Carregando análise de marketplaces..." />;
+  if (error) return <ErrorState message={error} />;
 
   const marketplacesArray = marketplaces ? Object.entries(marketplaces).map(([name, data]) => ({
     name,
@@ -50,106 +56,160 @@ export default function MarketplacesPage() {
     market_share: summary ? ((data.count / summary.total_records) * 100) : 0
   })) : [];
 
-  // Sort by market share
   marketplacesArray.sort((a, b) => b.market_share - a.market_share);
 
-  return (
-    <div className="container" style={{ padding: '40px 20px' }}>
-      <header style={{ marginBottom: '40px' }}>
-        <Link href="/" style={{ color: '#00D4FF', textDecoration: 'none', marginBottom: '16px', display: 'inline-block' }}>
-          ← Voltar ao Dashboard
-        </Link>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '8px', color: '#00D4FF' }}>
-          Análise de Marketplaces
-        </h1>
-        <p style={{ color: '#64748B', fontSize: '1.1rem' }}>
-          Desempenho, cobertura e market share por canal
-        </p>
-      </header>
+  const getMarketShareColor = (share: number) => {
+    if (share > 20) return 'success';
+    if (share > 10) return 'warning';
+    return 'neutral';
+  };
 
-      <div className="card" style={{ marginBottom: '40px' }}>
-        <table className="table">
-          <thead>
-            <tr>
-              <th>Marketplace</th>
-              <th>Market Share</th>
-              <th>Registros</th>
-              <th>Preço Médio</th>
-              <th>Preço Mín</th>
-              <th>Preço Máx</th>
-              <th>Marcas</th>
-            </tr>
-          </thead>
-          <tbody>
-            {marketplacesArray.map((mp) => (
-              <tr key={mp.name}>
-                <td style={{ fontWeight: 600, color: '#00FF88' }}>{mp.name}</td>
-                <td>
-                  <span style={{ 
-                    color: mp.market_share > 20 ? '#00FF88' : mp.market_share > 10 ? '#FFB800' : '#64748B',
-                    fontWeight: 600
-                  }}>
-                    {mp.market_share.toFixed(1)}%
-                  </span>
-                </td>
-                <td>{mp.count.toLocaleString()}</td>
-                <td>R$ {mp.avg_spot_price.toFixed(2)}</td>
-                <td>R$ {mp.min_spot_price.toFixed(2)}</td>
-                <td>R$ {mp.max_spot_price.toFixed(2)}</td>
-                <td>
-                  <span className="badge badge-success">{mp.brand_count} marcas</span>
-                  {mp.brands.includes(TARGET_BRAND) && <span style={{ marginLeft: '8px', color: '#00FF88', fontSize: '0.75rem' }}>★ {TARGET_BRAND}</span>}
-                  {mp.brands.includes(BENCHMARK_BRAND) && <span style={{ marginLeft: '8px', color: '#FFB800', fontSize: '0.75rem' }}>★ {BENCHMARK_BRAND}</span>}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+  const tableColumns = [
+    {
+      key: 'name',
+      header: 'Marketplace',
+      render: (value: string, row: any) => (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <span style={{ fontWeight: 600, color: '#111827' }}>
+            {value}
+          </span>
+          {row.brands.includes(TARGET_BRAND) && (
+            <StatusBadge variant="success" size="sm">★ {TARGET_BRAND}</StatusBadge>
+          )}
+          {row.brands.includes(BENCHMARK_BRAND) && (
+            <StatusBadge variant="warning" size="sm">★ {BENCHMARK_BRAND}</StatusBadge>
+          )}
+        </div>
+      )
+    },
+    {
+      key: 'market_share',
+      header: 'Market Share',
+      align: 'right' as const,
+      render: (value: number) => (
+        <StatusBadge variant={getMarketShareColor(value)}>
+          {value.toFixed(1)}%
+        </StatusBadge>
+      )
+    },
+    {
+      key: 'count',
+      header: 'Registros',
+      align: 'right' as const,
+      render: (value: number) => value.toLocaleString()
+    },
+    {
+      key: 'avg_spot_price',
+      header: 'Preço Médio',
+      align: 'right' as const,
+      render: (value: number) => `R$ ${value.toFixed(2)}`
+    },
+    {
+      key: 'min_spot_price',
+      header: 'Preço Mín',
+      align: 'right' as const,
+      render: (value: number) => `R$ ${value.toFixed(2)}`
+    },
+    {
+      key: 'max_spot_price',
+      header: 'Preço Máx',
+      align: 'right' as const,
+      render: (value: number) => `R$ ${value.toFixed(2)}`
+    },
+    {
+      key: 'brand_count',
+      header: 'Marcas',
+      align: 'center' as const,
+      render: (value: number) => (
+        <StatusBadge variant="info">{value} marcas</StatusBadge>
+      )
+    }
+  ];
+
+  const targetCoverage = marketplacesArray.filter(mp => mp.brands.includes(TARGET_BRAND)).length;
+  const benchmarkCoverage = marketplacesArray.filter(mp => mp.brands.includes(BENCHMARK_BRAND)).length;
+  const avgGlobalPrice = marketplacesArray.length > 0 
+    ? marketplacesArray.reduce((acc, mp) => acc + mp.avg_spot_price, 0) / marketplacesArray.length 
+    : 0;
+
+  return (
+    <div className="container" style={{ padding: '32px 20px' }}>
+      <PageHeader
+        title="Análise de Marketplaces"
+        subtitle="Desempenho, cobertura e market share por canal"
+        breadcrumb={{ label: 'Voltar ao Dashboard', href: '/' }}
+      />
+
+      <div className="grid grid-3" style={{ marginBottom: '32px' }}>
+        <KPIWidget
+          title="Total de Marketplaces"
+          value={marketplacesArray.length}
+          color="primary"
+        />
+        {marketplacesArray.length > 0 && (
+          <KPIWidget
+            title="Marketplace Líder"
+            value={marketplacesArray[0].name}
+            subtitle={`${marketplacesArray[0].market_share.toFixed(1)}% market share`}
+            color="success"
+          />
+        )}
+        <KPIWidget
+          title={`Cobertura ${TARGET_BRAND}`}
+          value={`${targetCoverage}/${marketplacesArray.length}`}
+          subtitle={`${((targetCoverage / marketplacesArray.length) * 100).toFixed(0)}% dos canais`}
+          color="info"
+        />
       </div>
 
+      <DashboardCard style={{ marginBottom: '32px' }}>
+        <AnalyticsTable
+          columns={tableColumns}
+          data={marketplacesArray}
+        />
+      </DashboardCard>
+
       <div className="grid grid-2">
-        <div className="card">
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '20px', color: '#00D4FF' }}>Insights Executivos</h2>
-          <div style={{ color: '#E2E8F0', lineHeight: 1.8 }}>
+        <DashboardCard title="Insights Executivos">
+          <div style={{ color: '#374151', lineHeight: 1.8 }}>
             {marketplacesArray.length > 0 && (
               <>
-                <p style={{ marginBottom: '12px' }}>
-                  <strong style={{ color: '#00FF88' }}>Marketplace Líder:</strong> {marketplacesArray[0].name} com {marketplacesArray[0].market_share.toFixed(1)}% de market share
+                <p style={{ marginBottom: '12px', margin: 0 }}>
+                  <strong style={{ color: '#059669' }}>Marketplace Líder:</strong> {marketplacesArray[0].name} com {marketplacesArray[0].market_share.toFixed(1)}% de market share
                 </p>
-                <p style={{ marginBottom: '12px' }}>
-                  <strong style={{ color: '#00FF88' }}>Cobertura {TARGET_BRAND}:</strong> Presente em {marketplacesArray.filter(mp => mp.brands.includes(TARGET_BRAND)).length} de {marketplacesArray.length} marketplaces
+                <p style={{ marginBottom: '12px', margin: 0 }}>
+                  <strong style={{ color: '#059669' }}>Cobertura {TARGET_BRAND}:</strong> Presente em {targetCoverage} de {marketplacesArray.length} marketplaces
                 </p>
-                <p style={{ marginBottom: '12px' }}>
-                  <strong style={{ color: '#FFB800' }}>Cobertura {BENCHMARK_BRAND}:</strong> Presente em {marketplacesArray.filter(mp => mp.brands.includes(BENCHMARK_BRAND)).length} de {marketplacesArray.length} marketplaces
+                <p style={{ marginBottom: '12px', margin: 0 }}>
+                  <strong style={{ color: '#D97706' }}>Cobertura {BENCHMARK_BRAND}:</strong> Presente em {benchmarkCoverage} de {marketplacesArray.length} marketplaces
                 </p>
-                <p style={{ marginBottom: '12px' }}>
-                  <strong style={{ color: '#00FF88' }}>Preço Médio Global:</strong> R$ {(marketplacesArray.reduce((acc, mp) => acc + mp.avg_spot_price, 0) / marketplacesArray.length).toFixed(2)}
+                <p style={{ marginBottom: '12px', margin: 0 }}>
+                  <strong style={{ color: '#059669' }}>Preço Médio Global:</strong> R$ {avgGlobalPrice.toFixed(2)}
                 </p>
-                <p>
-                  <strong style={{ color: '#00FF88' }}>Marketplaces com {TARGET_BRAND}:</strong> {marketplacesArray.filter(mp => mp.brands.includes(TARGET_BRAND)).map(mp => mp.name).join(', ') || 'Nenhum'}
+                <p style={{ margin: 0 }}>
+                  <strong style={{ color: '#059669' }}>Marketplaces com {TARGET_BRAND}:</strong> {marketplacesArray.filter(mp => mp.brands.includes(TARGET_BRAND)).map(mp => mp.name).join(', ') || 'Nenhum'}
                 </p>
               </>
             )}
           </div>
-        </div>
+        </DashboardCard>
 
-        <div className="card">
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '20px', color: '#00D4FF' }}>Recomendações</h2>
-          <div style={{ color: '#E2E8F0', lineHeight: 1.8 }}>
-            <p style={{ marginBottom: '12px' }}>
+        <DashboardCard title="Recomendações">
+          <div style={{ color: '#374151', lineHeight: 1.8 }}>
+            <p style={{ marginBottom: '12px', margin: 0 }}>
               • Priorizar marketplaces com market share {'>'} 20% para campanhas promocionais de {TARGET_BRAND}
             </p>
-            <p style={{ marginBottom: '12px' }}>
+            <p style={{ marginBottom: '12px', margin: 0 }}>
               • Expandir presença de {TARGET_BRAND} em marketplaces onde {BENCHMARK_BRAND} está presente mas {TARGET_BRAND} não
             </p>
-            <p style={{ marginBottom: '12px' }}>
+            <p style={{ marginBottom: '12px', margin: 0 }}>
               • Analisar marketplaces com preços médios mais altos para estratégias premium de {TARGET_BRAND}
             </p>
-            <p>
+            <p style={{ margin: 0 }}>
               • Monitorar marketplaces com alta variação de preço para detectar promoções competitivas de {BENCHMARK_BRAND}
             </p>
           </div>
-        </div>
+        </DashboardCard>
       </div>
     </div>
   );

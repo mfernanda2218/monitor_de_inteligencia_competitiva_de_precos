@@ -3,6 +3,12 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { TARGET_BRAND, BENCHMARK_BRAND } from './config/brands';
+import PageHeader from './components/layout/PageHeader';
+import KPIWidget from './components/ui/KPIWidget';
+import DashboardCard from './components/ui/DashboardCard';
+import Button from './components/ui/Button';
+import LoadingState from './components/shared/LoadingState';
+import ErrorState from './components/shared/ErrorState';
 
 interface Summary {
   total_records: number;
@@ -31,99 +37,105 @@ export default function Dashboard() {
       });
   }, []);
 
-  if (loading) return <div className="loading">Carregando dashboard...</div>;
-  if (error) return <div className="error">{error}</div>;
+  if (loading) return <LoadingState message="Carregando dashboard..." />;
+  if (error) return <ErrorState message={error} />;
 
   return (
-    <div className="container" style={{ padding: '40px 20px' }}>
-      <header style={{ marginBottom: '40px' }}>
-        <h1 style={{ fontSize: '2.5rem', fontWeight: 700, marginBottom: '8px', color: '#00D4FF' }}>
-          Monitor de Inteligência de Preços
-        </h1>
-        <p style={{ color: '#64748B', fontSize: '1.1rem' }}>
-          Dashboard de análise competitiva de preços • Última atualização: {summary?.processed_at ? new Date(summary.processed_at).toLocaleString() : 'N/A'}
-        </p>
-      </header>
+    <div className="container" style={{ padding: '32px 20px' }}>
+      <PageHeader
+        title="Monitor de Inteligência de Preços"
+        subtitle={`Dashboard de análise competitiva de preços • Última atualização: ${summary?.processed_at ? new Date(summary.processed_at).toLocaleString() : 'N/A'}`}
+      />
 
-      <div className="grid grid-4" style={{ marginBottom: '40px' }}>
-        <div className="card stat-card">
-          <div className="stat-value">{summary?.total_records?.toLocaleString() || 0}</div>
-          <div className="stat-label">Total de Registros</div>
-        </div>
-        <div className="card stat-card">
-          <div className="stat-value">{summary?.total_brands || 0}</div>
-          <div className="stat-label">Marcas</div>
-        </div>
-        <div className="card stat-card">
-          <div className="stat-value">{summary?.total_marketplaces || 0}</div>
-          <div className="stat-label">Marketplaces</div>
-        </div>
-        <div className="card stat-card">
-          <div className="stat-value">{summary?.total_skus || 0}</div>
-          <div className="stat-label">SKUs Acompanhados</div>
-        </div>
+      <div className="grid grid-4" style={{ marginBottom: '32px' }}>
+        <KPIWidget
+          title="Total de Registros"
+          value={summary?.total_records || 0}
+          color="primary"
+        />
+        <KPIWidget
+          title="Marcas"
+          value={summary?.total_brands || 0}
+          color="info"
+        />
+        <KPIWidget
+          title="Marketplaces"
+          value={summary?.total_marketplaces || 0}
+          color="success"
+        />
+        <KPIWidget
+          title="SKUs Acompanhados"
+          value={summary?.total_skus || 0}
+          color="warning"
+        />
       </div>
 
-      <div className="grid grid-2" style={{ marginBottom: '40px' }}>
-        <div className="card">
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '20px', color: '#00D4FF' }}>Ações Rápidas</h2>
+      <div className="grid grid-70-30" style={{ marginBottom: '32px' }}>
+        <DashboardCard title="Ações Rápidas">
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <Link href="/brands" className="btn btn-primary">
+            <Button href="/brands" variant="primary">
               Analisar Marcas →
-            </Link>
-            <Link href="/marketplaces" className="btn btn-secondary">
+            </Button>
+            <Button href="/marketplaces" variant="secondary">
               Ver Marketplaces →
-            </Link>
-            <Link href="/alerts" className="btn btn-secondary">
+            </Button>
+            <Button href="/alerts" variant="secondary">
               Ver Alertas →
-            </Link>
-            <Link href="/timeline" className="btn btn-secondary">
+            </Button>
+            <Button href="/timeline" variant="secondary">
               Linha do Tempo de Preços →
-            </Link>
+            </Button>
           </div>
-        </div>
+        </DashboardCard>
 
-        <div className="card">
-          <h2 style={{ fontSize: '1.5rem', marginBottom: '20px', color: '#00D4FF' }}>Categorias</h2>
-          <div style={{ color: '#64748B' }}>
-            <p style={{ marginBottom: '12px' }}>Total de Categorias: <span style={{ color: '#00FF88', fontWeight: 600 }}>{summary?.total_categories || 0}</span></p>
-            <p>Explore a análise detalhada de categorias nas seções dedicadas.</p>
+        <DashboardCard title="Categorias">
+          <div style={{ color: '#6B7280' }}>
+            <div style={{ marginBottom: '12px' }}>
+              <span style={{ color: '#6B7280' }}>Total de Categorias: </span>
+              <span style={{ color: '#059669', fontWeight: 600 }}>
+                {summary?.total_categories || 0}
+              </span>
+            </div>
+            <p style={{ fontSize: '0.875rem', margin: 0 }}>
+              Explore a análise detalhada de categorias nas seções dedicadas.
+            </p>
           </div>
-        </div>
+        </DashboardCard>
       </div>
 
-      <div className="card">
-        <h2 style={{ fontSize: '1.5rem', marginBottom: '20px', color: '#00D4FF' }}>Resumo Executivo</h2>
-        <p style={{ color: '#E2E8F0', lineHeight: 1.8 }}>
+      <DashboardCard title="Resumo Executivo" style={{ marginBottom: '32px' }}>
+        <p style={{ color: '#374151', lineHeight: 1.8, margin: 0 }}>
           Este dashboard fornece inteligência competitiva em tempo real sobre preços em múltiplos marketplaces.
-          Monitore {summary?.total_records?.toLocaleString() || 0} pontos de preço de {summary?.total_brands || 0} marcas
-          em {summary?.total_marketplaces || 0} marketplaces. Use a navegação acima para mergulhar mais fundo em
+          Monitore <strong>{summary?.total_records?.toLocaleString() || 0}</strong> pontos de preço de <strong>{summary?.total_brands || 0}</strong> marcas
+          em <strong>{summary?.total_marketplaces || 0}</strong> marketplaces. Use a navegação acima para mergulhar mais fundo em
           desempenho específico de marcas, cobertura de marketplaces e alertas de preços.
         </p>
-      </div>
+      </DashboardCard>
 
-      <div className="card" style={{ marginTop: '40px', border: '2px solid #00D4FF' }}>
-        <h2 style={{ fontSize: '1.5rem', marginBottom: '20px', color: '#00FF88' }}>⚔️ {TARGET_BRAND} vs {BENCHMARK_BRAND}</h2>
-        <div style={{ color: '#E2E8F0', lineHeight: 1.8 }}>
-          <p style={{ marginBottom: '12px' }}>
-            <strong style={{ color: '#00FF88' }}>Foco:</strong> Análise competitiva focada em {TARGET_BRAND} com {BENCHMARK_BRAND} como benchmark principal
+      <DashboardCard 
+        title={`⚔️ ${TARGET_BRAND} vs ${BENCHMARK_BRAND}`}
+        style={{ border: '2px solid #2563EB' }}
+      >
+        <div style={{ color: '#374151', lineHeight: 1.8, marginBottom: '20px' }}>
+          <p style={{ marginBottom: '12px', margin: 0 }}>
+            <strong style={{ color: '#059669' }}>Foco:</strong> Análise competitiva focada em {TARGET_BRAND} com {BENCHMARK_BRAND} como benchmark principal
           </p>
-          <p style={{ marginBottom: '12px' }}>
-            <strong style={{ color: '#FFB800' }}>Objetivo:</strong> Identificar oportunidades de precificação e posicionamento de mercado para {TARGET_BRAND}
+          <p style={{ marginBottom: '12px', margin: 0 }}>
+            <strong style={{ color: '#D97706' }}>Objetivo:</strong> Identificar oportunidades de precificação e posicionamento de mercado para {TARGET_BRAND}
           </p>
-          <p>
-            <strong style={{ color: '#00D4FF' }}>Métricas:</strong> Market share, posicionamento de preço, cobertura de marketplace e tendências competitivas
+          <p style={{ margin: 0 }}>
+            <strong style={{ color: '#2563EB' }}>Métricas:</strong> Market share, posicionamento de preço, cobertura de marketplace e tendências competitivas
           </p>
         </div>
-        <div style={{ marginTop: '20px', display: 'flex', gap: '12px' }}>
-          <Link href="/brands" className="btn btn-primary">
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+          <Button href="/brands" variant="primary">
             Ver Comparativo Detalhado →
-          </Link>
-          <Link href="/alerts" className="btn btn-secondary">
+          </Button>
+          <Button href="/alerts" variant="secondary">
             Ver Alertas {TARGET_BRAND} →
-          </Link>
+          </Button>
         </div>
-      </div>
+      </DashboardCard>
     </div>
   );
 }

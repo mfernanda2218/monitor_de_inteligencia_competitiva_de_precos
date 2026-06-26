@@ -121,12 +121,10 @@ textarea {
 }
 
 .dashboard-layout {
-  max-width: 100%;
-  margin: 0 auto;
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 140px);
-  /* ajusta conforme altura do header */
+  min-height: calc(100vh - 140px);
+  /* deixa espaço pro header */
   gap: var(--spacing-md);
 }
 
@@ -150,16 +148,17 @@ textarea {
 }
 
 .dashboard-content-grid {
+  flex: 1;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
+  grid-template-columns: minmax(0, 1fr) 300px;
   gap: var(--spacing-sm);
-  align-items: stretch;
+  min-height: 0;
 }
 
 .dashboard-root {
   display: flex;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow: visible;
   background: #f9fafb;
 }
 
@@ -229,8 +228,8 @@ textarea {
   flex: 1;
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow: visible;
   padding: 1.5rem 2rem;
   max-width: calc(100vw - 280px);
 }
@@ -407,13 +406,13 @@ textarea {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: var(--spacing-sm);
-  height: 100%;
+  min-height: 0;
 }
 
 .small-chart {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  min-height: 215px;
 }
 
 .small-chart>div:last-child {
@@ -423,22 +422,20 @@ textarea {
 
 .dashboard-chart-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.08fr) minmax(380px, 0.92fr);
+  grid-template-columns: minmax(0, 1.1fr) minmax(380px, 0.9fr);
   gap: var(--spacing-sm);
-  flex: 1;
   min-height: 0;
   align-items: stretch;
 }
 
 .main-chart-card {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0;
+  min-height: 460px;
+  /* bom tamanho */
 }
 
 .main-chart-card>div:last-child {
-  /* container do gráfico */
   flex: 1;
   min-height: 0;
 }
@@ -528,6 +525,12 @@ textarea {
   }
 }
 
+.alerts-card>div:last-child {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+}
+
 .dashboard-alerts-sidebar {
   display: flex;
   flex-direction: column;
@@ -549,18 +552,14 @@ textarea {
   min-height: 0;
 }
 
-/* KPIs mais compactos */
 .compact-kpis {
-  gap: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
+  gap: 12px;
 }
 
 .compact-kpis .stat-card {
-  min-height: 68px;
-  padding: 10px 12px;
+  min-height: 72px;
 }
 
-/* Reduzir paddings gerais */
 .card {
   padding: 12px;
 }
@@ -569,6 +568,25 @@ textarea {
 .DashboardCard {
   padding: 12px;
   height: 100%;
+}
+
+/* Ajuste fino em telas menores */
+@media (max-height: 900px) {
+  .main-chart-card {
+    min-height: 360px;
+  }
+
+  .small-chart {
+    min-height: 190px;
+  }
+}
+
+@media (max-width: 1024px) {
+
+  .dashboard-content-grid,
+  .dashboard-chart-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* Melhor responsividade em telas grandes */
@@ -582,16 +600,26 @@ textarea {
   }
 }
 
-/* Evitar scroll indesejado */
 body,
 html,
+.page-wrapper {
+  height: auto;
+  min-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
 .page-wrapper {
   height: 100vh;
   overflow: hidden;
 }
 
 .dashboard-layout {
-  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: var(--spacing-md);
+  min-height: 0;
 }
 
 .main-grid {

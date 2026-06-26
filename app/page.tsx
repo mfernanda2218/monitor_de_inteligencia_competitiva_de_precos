@@ -240,7 +240,6 @@ export default function Dashboard() {
                       { dataKey: 'min_price', name: 'Preço mínimo', color: '#059669' },
                       { dataKey: 'max_price', name: 'Preço máximo', color: '#D97706' }
                     ]}
-                    height={400}
                   />
                 </div>
               </ChartCard>

@@ -142,12 +142,12 @@ export default function MarketplacesPage() {
 
   const targetCoverage = marketplacesArray.filter(mp => mp.brands.includes(TARGET_BRAND)).length;
   const benchmarkCoverage = marketplacesArray.filter(mp => mp.brands.includes(BENCHMARK_BRAND)).length;
-  const avgGlobalPrice = marketplacesArray.length > 0 
-    ? marketplacesArray.reduce((acc, mp) => acc + mp.avg_spot_price, 0) / marketplacesArray.length 
+  const avgGlobalPrice = marketplacesArray.length > 0
+    ? marketplacesArray.reduce((acc, mp) => acc + mp.avg_spot_price, 0) / marketplacesArray.length
     : 0;
 
   return (
-    <div className="container page-shell">
+    <div className="page-wrapper">
       <PageHeader
         title="Análise de Marketplaces"
         subtitle="Desempenho, cobertura e market share por canal"

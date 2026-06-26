@@ -191,7 +191,7 @@ export default function SKUsPage() {
     : 'N/D';
 
   return (
-    <div className="container page-shell">
+    <div className="page-wrapper">
       <PageHeader
         title="Top SKUs"
         subtitle="Análise de preços por SKU com métricas vindas do ETL"

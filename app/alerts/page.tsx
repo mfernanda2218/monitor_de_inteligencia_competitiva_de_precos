@@ -69,7 +69,7 @@ export default function AlertsPage() {
   const convertedAlerts = alerts.map(toAlert);
 
   return (
-    <div className="container page-shell">
+    <div className="page-wrapper">
       <PageHeader
         title="Inteligência Competitiva"
         subtitle="Insights acionáveis para tomada de decisão estratégica"

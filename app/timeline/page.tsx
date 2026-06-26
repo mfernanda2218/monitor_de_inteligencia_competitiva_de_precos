@@ -125,7 +125,7 @@ function TimelineContent() {
   ];
 
   return (
-    <div className="container page-shell">
+    <div className="page-wrapper">
       <PageHeader
         title="Linha do Tempo de Preços"
         subtitle={`Evolução histórica de preços por SKU - SKU: ${currentSku || 'N/D'}`}
@@ -158,41 +158,41 @@ function TimelineContent() {
       )}
 
       <div className={timeline.length > 0 ? 'timeline-layout' : undefined}>
-      <ChartCard
-        title="Evolução de Preço por SKU"
-        actions={
-          <select
-            value={currentSku}
-            onChange={(event) => loadTimeline(event.target.value)}
-            className="control"
-          >
-            {topSkus.map(sku => (
-              <option key={sku} value={sku}>{sku}</option>
-            ))}
-          </select>
-        }
-        style={{ marginBottom: timeline.length > 0 ? 0 : '20px' }}
-      >
-        {timeline.length > 0 ? (
-          <PriceLineChart data={chartData} lines={chartLines} height={240} />
-        ) : (
-          <div className="empty-chart">
-            Selecione um SKU para visualizar a evolução de preços
-          </div>
+        <ChartCard
+          title="Evolução de Preço por SKU"
+          actions={
+            <select
+              value={currentSku}
+              onChange={(event) => loadTimeline(event.target.value)}
+              className="control"
+            >
+              {topSkus.map(sku => (
+                <option key={sku} value={sku}>{sku}</option>
+              ))}
+            </select>
+          }
+          style={{ marginBottom: timeline.length > 0 ? 0 : '20px' }}
+        >
+          {timeline.length > 0 ? (
+            <PriceLineChart data={chartData} lines={chartLines} height={240} />
+          ) : (
+            <div className="empty-chart">
+              Selecione um SKU para visualizar a evolução de preços
+            </div>
+          )}
+        </ChartCard>
+
+
+        {timeline.length > 0 && (
+          <DashboardCard title="Resumo do Período">
+            <div className="metric-grid">
+              <MetricIndicator label="Data Inicial" value={formatDate(timeline[0]?.date) || 'N/D'} size="sm" />
+              <MetricIndicator label="Data Final" value={formatDate(timeline[timeline.length - 1]?.date) || 'N/D'} size="sm" />
+              <MetricIndicator label="Pontos de Dados" value={timeline.length} size="sm" />
+              <MetricIndicator label="Volatilidade" value={volatility} size="sm" />
+            </div>
+          </DashboardCard>
         )}
-      </ChartCard>
-
-
-      {timeline.length > 0 && (
-        <DashboardCard title="Resumo do Período">
-          <div className="metric-grid">
-            <MetricIndicator label="Data Inicial" value={formatDate(timeline[0]?.date) || 'N/D'} size="sm" />
-            <MetricIndicator label="Data Final" value={formatDate(timeline[timeline.length - 1]?.date) || 'N/D'} size="sm" />
-            <MetricIndicator label="Pontos de Dados" value={timeline.length} size="sm" />
-            <MetricIndicator label="Volatilidade" value={volatility} size="sm" />
-          </div>
-        </DashboardCard>
-      )}
       </div>
     </div>
   );

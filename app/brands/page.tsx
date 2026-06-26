@@ -150,7 +150,7 @@ export default function BrandsPage() {
   const benchmarkBrand = brandsArray.find(b => b.name.toUpperCase() === BENCHMARK_BRAND.toUpperCase());
 
   return (
-    <div className="container page-shell">
+    <div className="page-wrapper">
       <PageHeader
         title="Análise de Marcas"
         subtitle="Posicionamento competitivo e market share por marca"

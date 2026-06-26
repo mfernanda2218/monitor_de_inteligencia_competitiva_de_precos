@@ -68,6 +68,8 @@ export default function MarketplacesPage() {
     {
       key: 'name',
       header: 'Marketplace',
+      width: '28%',
+      minWidth: '220px',
       render: (value: string, row: any) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <span style={{ fontWeight: 600, color: '#111827' }}>
@@ -85,6 +87,8 @@ export default function MarketplacesPage() {
     {
       key: 'market_share',
       header: 'Market Share',
+      width: '14%',
+      minWidth: '132px',
       align: 'right' as const,
       render: (value: number) => (
         <StatusBadge variant={getMarketShareColor(value)}>
@@ -95,30 +99,40 @@ export default function MarketplacesPage() {
     {
       key: 'count',
       header: 'Registros',
+      width: '12%',
+      minWidth: '116px',
       align: 'right' as const,
       render: (value: number) => value.toLocaleString()
     },
     {
       key: 'avg_spot_price',
       header: 'Preço Médio',
+      width: '14%',
+      minWidth: '132px',
       align: 'right' as const,
       render: (value: number) => `R$ ${value.toFixed(2)}`
     },
     {
       key: 'min_spot_price',
       header: 'Preço Mín',
+      width: '12%',
+      minWidth: '116px',
       align: 'right' as const,
       render: (value: number) => `R$ ${value.toFixed(2)}`
     },
     {
       key: 'max_spot_price',
       header: 'Preço Máx',
+      width: '12%',
+      minWidth: '116px',
       align: 'right' as const,
       render: (value: number) => `R$ ${value.toFixed(2)}`
     },
     {
       key: 'brand_count',
       header: 'Marcas',
+      width: '8%',
+      minWidth: '104px',
       align: 'center' as const,
       render: (value: number) => (
         <StatusBadge variant="info">{value} marcas</StatusBadge>
@@ -133,14 +147,14 @@ export default function MarketplacesPage() {
     : 0;
 
   return (
-    <div className="container" style={{ padding: '32px 20px' }}>
+    <div className="container page-shell">
       <PageHeader
         title="Análise de Marketplaces"
         subtitle="Desempenho, cobertura e market share por canal"
         breadcrumb={{ label: 'Voltar ao Dashboard', href: '/' }}
       />
 
-      <div className="grid grid-3" style={{ marginBottom: '32px' }}>
+      <div className="grid grid-3 section-gap">
         <KPIWidget
           title="Total de Marketplaces"
           value={marketplacesArray.length}
@@ -162,7 +176,7 @@ export default function MarketplacesPage() {
         />
       </div>
 
-      <DashboardCard style={{ marginBottom: '32px' }}>
+      <DashboardCard className="section-gap">
         <AnalyticsTable
           columns={tableColumns}
           data={marketplacesArray}

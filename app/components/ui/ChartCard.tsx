@@ -15,6 +15,8 @@ export default function ChartCard({ title, children, actions, className = '', st
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
+        gap: '12px',
+        flexWrap: 'wrap',
         marginBottom: '20px'
       }}>
         <h3 style={{

@@ -67,6 +67,8 @@ export default function SKUsPage() {
     {
       key: 'sku',
       header: 'SKU',
+      width: '18%',
+      minWidth: '168px',
       render: (value: string) => (
         <span style={{ fontWeight: 600, color: '#111827' }}>{value}</span>
       )
@@ -74,12 +76,16 @@ export default function SKUsPage() {
     {
       key: 'record_count',
       header: 'Registros',
+      width: '10%',
+      minWidth: '108px',
       align: 'right' as const,
       render: (value: number | null) => formatNumber(value)
     },
     {
       key: 'brand_count',
       header: 'Marcas',
+      width: '9%',
+      minWidth: '96px',
       align: 'center' as const,
       render: (value: number | null) => (
         <StatusBadge variant="info">{formatNumber(value)}</StatusBadge>
@@ -88,6 +94,8 @@ export default function SKUsPage() {
     {
       key: 'target_price',
       header: `Preço ${TARGET_BRAND}`,
+      width: '13%',
+      minWidth: '136px',
       align: 'right' as const,
       render: (value: number | null) => (
         <span style={{ color: value ? '#2563EB' : '#9CA3AF', fontWeight: 500 }}>
@@ -98,6 +106,8 @@ export default function SKUsPage() {
     {
       key: 'market_min',
       header: 'Mín. Mercado',
+      width: '16%',
+      minWidth: '180px',
       align: 'right' as const,
       render: (value: number | null, row: SKUData) => (
         <span style={{ color: value ? '#6B7280' : '#9CA3AF' }}>
@@ -113,12 +123,16 @@ export default function SKUsPage() {
     {
       key: 'market_avg',
       header: 'Média Mercado',
+      width: '13%',
+      minWidth: '136px',
       align: 'right' as const,
       render: (value: number | null) => formatCurrency(value)
     },
     {
       key: 'premium_vs_min',
       header: 'Premium vs Mín.',
+      width: '11%',
+      minWidth: '132px',
       align: 'right' as const,
       render: (value: number | null) => {
         if (value === null || value === undefined) {
@@ -138,6 +152,8 @@ export default function SKUsPage() {
     {
       key: 'alert_severity',
       header: 'Alerta',
+      width: '10%',
+      minWidth: '128px',
       align: 'center' as const,
       render: (value: 'danger' | 'warning' | 'success' | null) => {
         if (!value) return <span style={{ color: '#9CA3AF' }}>N/D</span>;
@@ -154,6 +170,8 @@ export default function SKUsPage() {
     {
       key: 'action',
       header: 'Ação',
+      width: '10%',
+      minWidth: '136px',
       align: 'center' as const,
       render: (_value: string, row: SKUData) => (
         <Button href={`/timeline?sku=${encodeURIComponent(row.sku)}`} variant="secondary" size="sm">

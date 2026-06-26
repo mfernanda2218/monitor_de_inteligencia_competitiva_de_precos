@@ -69,6 +69,8 @@ export default function BrandsPage() {
     {
       key: 'name',
       header: 'Marca',
+      width: '22%',
+      minWidth: '180px',
       render: (value: string) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ fontWeight: 600, color: '#111827' }}>
@@ -83,6 +85,8 @@ export default function BrandsPage() {
     {
       key: 'market_share',
       header: 'Market Share',
+      width: '13%',
+      minWidth: '132px',
       align: 'right' as const,
       render: (value: number) => (
         <StatusBadge variant={getMarketShareColor(value)}>
@@ -93,36 +97,48 @@ export default function BrandsPage() {
     {
       key: 'count',
       header: 'Registros',
+      width: '11%',
+      minWidth: '116px',
       align: 'right' as const,
       render: (value: number) => value.toLocaleString()
     },
     {
       key: 'avg_spot_price',
       header: 'Preço Médio',
+      width: '13%',
+      minWidth: '132px',
       align: 'right' as const,
       render: (value: number) => `R$ ${value.toFixed(2)}`
     },
     {
       key: 'min_spot_price',
       header: 'Preço Mín',
+      width: '11%',
+      minWidth: '116px',
       align: 'right' as const,
       render: (value: number) => `R$ ${value.toFixed(2)}`
     },
     {
       key: 'max_spot_price',
       header: 'Preço Máx',
+      width: '11%',
+      minWidth: '116px',
       align: 'right' as const,
       render: (value: number) => `R$ ${value.toFixed(2)}`
     },
     {
       key: 'price_variation',
       header: 'Variação',
+      width: '10%',
+      minWidth: '112px',
       align: 'right' as const,
       render: (value: number) => `R$ ${value.toFixed(2)}`
     },
     {
       key: 'marketplace_coverage',
       header: 'Cobertura',
+      width: '9%',
+      minWidth: '112px',
       align: 'center' as const,
       render: (value: number) => (
         <StatusBadge variant="info">{value} MPs</StatusBadge>
@@ -134,14 +150,14 @@ export default function BrandsPage() {
   const benchmarkBrand = brandsArray.find(b => b.name.toUpperCase() === BENCHMARK_BRAND.toUpperCase());
 
   return (
-    <div className="container" style={{ padding: '32px 20px' }}>
+    <div className="container page-shell">
       <PageHeader
         title="Análise de Marcas"
         subtitle="Posicionamento competitivo e market share por marca"
         breadcrumb={{ label: 'Voltar ao Dashboard', href: '/' }}
       />
 
-      <div className="grid grid-3" style={{ marginBottom: '32px' }}>
+      <div className="grid grid-3 section-gap">
         <KPIWidget
           title="Total de Marcas"
           value={brandsArray.length}
@@ -165,7 +181,7 @@ export default function BrandsPage() {
         )}
       </div>
 
-      <DashboardCard style={{ marginBottom: '32px' }}>
+      <DashboardCard className="section-gap">
         <AnalyticsTable
           columns={tableColumns}
           data={brandsArray}

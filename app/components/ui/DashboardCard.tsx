@@ -24,7 +24,10 @@ export default function DashboardCard({
   return (
     <div 
       className={`card ${className}`}
-      style={{ padding: paddingStyles[padding], ...style }}
+      style={{
+        '--card-padding': paddingStyles[padding],
+        ...style
+      } as React.CSSProperties}
     >
       {title && (
         <h3 style={{

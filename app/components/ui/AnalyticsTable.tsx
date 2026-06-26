@@ -4,6 +4,7 @@ interface Column {
   key: string;
   header: string;
   width?: string;
+  minWidth?: string;
   align?: 'left' | 'center' | 'right';
   render?: (value: any, row: any) => React.ReactNode;
 }
@@ -60,35 +61,58 @@ export default function AnalyticsTable({
     }
   };
 
+  const getJustifyContent = (align?: string) => {
+    switch (align) {
+      case 'center': return 'center';
+      case 'right': return 'flex-end';
+      default: return 'flex-start';
+    }
+  };
+
+  const tableMinWidth = Math.max(720, columns.length * 136);
+
   return (
     <div className={`table-frame ${className}`}>
       <div className="table-scroll">
-        <table className="table" style={{ margin: 0 }}>
+        <table className="table analytics-table" style={{ margin: 0, minWidth: `${tableMinWidth}px` }}>
+          <colgroup>
+            {columns.map((column) => (
+              <col
+                key={column.key}
+                style={{
+                  width: column.width,
+                  minWidth: column.minWidth
+                }}
+              />
+            ))}
+          </colgroup>
           <thead>
             <tr>
               {columns.map((column) => (
                 <th
                   key={column.key}
                   onClick={() => handleSort(column.key)}
+                  aria-sort={
+                    sortColumn === column.key
+                      ? sortDirection === 'asc' ? 'ascending' : 'descending'
+                      : 'none'
+                  }
                   style={{
                     ...getAlignStyle(column.align),
                     width: column.width,
+                    minWidth: column.minWidth,
                     cursor: 'pointer',
-                    userSelect: 'none',
-                    background: '#F9FAFB'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#F3F4F6';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#F9FAFB';
+                    userSelect: 'none'
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <div
+                    className="table-heading-content"
+                    style={{ justifyContent: getJustifyContent(column.align) }}
+                  >
                     {column.header}
                     {sortColumn === column.key && (
-                      <span style={{ fontSize: '0.625rem' }}>
-                        {sortDirection === 'asc' ? '↑' : '↓'}
+                      <span className="sort-indicator" aria-hidden="true">
+                        {sortDirection === 'asc' ? '\u2191' : '\u2193'}
                       </span>
                     )}
                   </div>
@@ -108,7 +132,11 @@ export default function AnalyticsTable({
                 {columns.map((column) => (
                   <td
                     key={column.key}
-                    style={getAlignStyle(column.align)}
+                    className={column.align === 'right' ? 'numeric-cell' : undefined}
+                    style={{
+                      ...getAlignStyle(column.align),
+                      minWidth: column.minWidth
+                    }}
                   >
                     {column.render ? column.render(row[column.key], row) : row[column.key]}
                   </td>

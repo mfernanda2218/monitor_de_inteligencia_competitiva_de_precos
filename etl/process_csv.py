@@ -508,6 +508,61 @@ def get_top_skus(results, limit=20):
     top_skus = sorted(sku_counts.items(), key=lambda x: x[1], reverse=True)[:limit]
     return [sku for sku, count in top_skus]
 
+def get_top_sku_metrics(results, top_skus):
+    """Build real SKU pricing metrics for the frontend."""
+    metrics = []
+
+    for sku in top_skus:
+        brand_prices = results['sku_prices'].get(sku, {})
+        if not brand_prices:
+            continue
+
+        target_key = next((brand for brand in brand_prices if brand.upper() == TARGET_BRAND.upper()), None)
+        competitor_prices = []
+        market_min_competitor = None
+        market_min = None
+
+        for brand, prices in brand_prices.items():
+            if not prices:
+                continue
+
+            brand_min = float(np.min(prices))
+            if brand.upper() != TARGET_BRAND.upper():
+                competitor_prices.extend(prices)
+                if market_min is None or brand_min < market_min:
+                    market_min = brand_min
+                    market_min_competitor = brand
+
+        all_prices = [price for prices in brand_prices.values() for price in prices]
+        target_price = float(np.mean(brand_prices[target_key])) if target_key else None
+        market_avg = float(np.mean(competitor_prices or all_prices)) if all_prices else None
+
+        premium_vs_min = None
+        alert_severity = None
+        if target_price is not None and market_min and market_min > 0:
+            premium_vs_min = ((target_price - market_min) / market_min) * 100
+            if premium_vs_min > 10:
+                alert_severity = 'danger'
+            elif premium_vs_min > 0:
+                alert_severity = 'warning'
+            else:
+                alert_severity = 'success'
+
+        metrics.append({
+            'sku': sku,
+            'record_count': len(all_prices),
+            'brand_count': len(brand_prices),
+            'target_brand': TARGET_BRAND,
+            'target_price': target_price,
+            'market_min': market_min,
+            'market_avg': market_avg,
+            'market_min_competitor': market_min_competitor,
+            'premium_vs_min': premium_vs_min,
+            'alert_severity': alert_severity
+        })
+
+    return metrics
+
 def main():
     print(f"Starting ETL process for {CSV_PATH}")
     print(f"Chunk size: {CHUNK_SIZE}")
@@ -539,6 +594,7 @@ def main():
     
     # Get top SKUs before finalizing (needs original timeline structure)
     top_skus = get_top_skus(accumulated, limit=20)
+    top_sku_metrics = get_top_sku_metrics(accumulated, top_skus)
     
     # Finalize results
     results = finalize_results(accumulated)
@@ -565,6 +621,7 @@ def main():
     r.set('dashboard:categories', json.dumps(results['categories']), ex=REDIS_TTL)
     r.set('dashboard:alerts', json.dumps(alerts), ex=REDIS_TTL)
     r.set('dashboard:top_skus', json.dumps(top_skus), ex=REDIS_TTL)
+    r.set('dashboard:sku_metrics', json.dumps(top_sku_metrics), ex=REDIS_TTL)
     
     # Store timeline for top SKUs only (to save memory)
     for sku in top_skus:

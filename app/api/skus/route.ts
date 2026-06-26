@@ -11,11 +11,14 @@ export async function GET() {
   try {
     await client.connect();
     const data = await client.get('dashboard:sku_metrics');
-    const fallbackData = data ? null : await client.get('dashboard:top_skus');
+    const fallbackData = await client.get('dashboard:top_skus');
     await client.disconnect();
 
     if (data) {
-      return NextResponse.json(JSON.parse(data));
+      const skuMetrics = JSON.parse(data);
+      if (Array.isArray(skuMetrics) && skuMetrics.length > 0) {
+        return NextResponse.json(skuMetrics);
+      }
     }
 
     if (fallbackData) {

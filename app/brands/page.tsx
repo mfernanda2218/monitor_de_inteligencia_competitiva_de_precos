@@ -181,10 +181,11 @@ export default function BrandsPage() {
         )}
       </div>
 
-      <DashboardCard className="section-gap">
+      <DashboardCard className="section-gap" padding="sm">
         <AnalyticsTable
           columns={tableColumns}
           data={brandsArray}
+          pageSize={6}
         />
       </DashboardCard>
 

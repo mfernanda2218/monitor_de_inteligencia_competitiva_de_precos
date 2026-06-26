@@ -15,27 +15,27 @@ export default function ChartCard({ title, children, actions, className = '', st
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        gap: '12px',
+        gap: '8px',
         flexWrap: 'wrap',
-        marginBottom: '20px'
+        marginBottom: '8px'
       }}>
         <h3 style={{
-          fontSize: '1rem',
+          fontSize: '0.78rem',
           fontWeight: 600,
           color: '#111827',
           textTransform: 'uppercase',
-          letterSpacing: '0.05em',
+          letterSpacing: '0.04em',
           margin: 0
         }}>
           {title}
         </h3>
         {actions && (
-          <div style={{ display: 'flex', gap: '8px' }}>
+          <div style={{ display: 'flex', gap: '6px' }}>
             {actions}
           </div>
         )}
       </div>
-      <div style={{ minHeight: '300px' }}>
+      <div style={{ minHeight: 0 }}>
         {children}
       </div>
     </div>

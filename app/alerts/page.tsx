@@ -85,7 +85,7 @@ export default function AlertsPage() {
 
       <div className="grid grid-70-30 section-gap">
         <DashboardCard title="Alertas Recentes">
-          <AlertPanel alerts={convertedAlerts} maxItems={10} />
+          <AlertPanel alerts={convertedAlerts} maxItems={6} />
         </DashboardCard>
 
         <DashboardCard title="Resumo por Severidade">
@@ -112,7 +112,7 @@ export default function AlertsPage() {
 
       {alerts.length > 0 && (
         <DashboardCard title="Detalhes dos Alertas">
-          <div className="grid grid-2">
+          <div className="grid grid-3">
             {alerts.map((alert, index) => (
               <div
                 key={`${alert.type}-${alert.sku || alert.brand || index}`}

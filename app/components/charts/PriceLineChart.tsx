@@ -29,13 +29,13 @@ interface PriceLineChartProps {
 export default function PriceLineChart({ 
   data, 
   lines, 
-  height = 400,
+  height = 240,
   className = '' 
 }: PriceLineChartProps) {
   return (
     <div className={className} style={{ width: '100%', height }}>
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data}>
+        <LineChart data={data} margin={{ top: 6, right: 10, left: 0, bottom: 0 }}>
           <CartesianGrid 
             strokeDasharray="3 3" 
             stroke="#E5E7EB"
@@ -44,13 +44,13 @@ export default function PriceLineChart({
           <XAxis 
             dataKey="date" 
             stroke="#6B7280"
-            tick={{ fill: '#6B7280', fontSize: 12 }}
+            tick={{ fill: '#6B7280', fontSize: 10 }}
             tickLine={{ stroke: '#E5E7EB' }}
             axisLine={{ stroke: '#E5E7EB' }}
           />
           <YAxis 
             stroke="#6B7280"
-            tick={{ fill: '#6B7280', fontSize: 12 }}
+            tick={{ fill: '#6B7280', fontSize: 10 }}
             tickLine={{ stroke: '#E5E7EB' }}
             axisLine={{ stroke: '#E5E7EB' }}
             tickFormatter={(value) => `R$ ${value.toLocaleString()}`}
@@ -60,15 +60,15 @@ export default function PriceLineChart({
               background: '#FFFFFF',
               border: '1px solid #E5E7EB',
               borderRadius: '8px',
-              padding: '12px',
+              padding: '8px',
               boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
             }}
-            itemStyle={{ fontSize: '0.875rem', color: '#111827' }}
+            itemStyle={{ fontSize: '0.75rem', color: '#111827' }}
             labelStyle={{ fontSize: '0.75rem', color: '#6B7280', marginBottom: '4px' }}
             formatter={(value: number) => [`R$ ${value.toLocaleString()}`, '']}
           />
           <Legend 
-            wrapperStyle={{ fontSize: '0.875rem', color: '#111827' }}
+            wrapperStyle={{ fontSize: '0.72rem', color: '#111827' }}
             iconType="circle"
           />
           {lines.map((line) => (
@@ -79,8 +79,8 @@ export default function PriceLineChart({
               stroke={line.color}
               strokeWidth={2}
               name={line.name}
-              dot={{ fill: line.color, strokeWidth: 2, r: 4 }}
-              activeDot={{ r: 6, fill: line.color }}
+              dot={{ fill: line.color, strokeWidth: 1.5, r: 2 }}
+              activeDot={{ r: 4, fill: line.color }}
             />
           ))}
         </LineChart>

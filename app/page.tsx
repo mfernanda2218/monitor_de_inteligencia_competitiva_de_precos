@@ -92,6 +92,7 @@ export default function Dashboard() {
   const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
   const [topSkus, setTopSkus] = useState<string[]>([]);
   const [selectedSKU, setSelectedSKU] = useState<string>('');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -198,7 +199,7 @@ export default function Dashboard() {
       value: brand.market_share
     }))
     .sort((a, b) => b.value - a.value)
-    .slice(0, 10);
+    .slice(0, 6);
 
   const targetBrand = brandData.find(b => b.brand.toUpperCase() === TARGET_BRAND.toUpperCase());
   const benchmarkBrand = brandData.find(b => b.brand.toUpperCase() === BENCHMARK_BRAND.toUpperCase());
@@ -213,7 +214,7 @@ export default function Dashboard() {
       value: mp.avg_price
     }))
     .sort((a, b) => b.value - a.value)
-    .slice(0, 10);
+    .slice(0, 6);
 
   const categoryPriceData = categoryData
     .map(cat => ({
@@ -221,89 +222,125 @@ export default function Dashboard() {
       value: cat.avg_price
     }))
     .sort((a, b) => b.value - a.value)
-    .slice(0, 10);
+    .slice(0, 6);
 
   return (
     <div className="container page-shell">
       <PageHeader
-        title="Monitor de Inteligência de Preços"
-        subtitle={`Dashboard de análise competitiva de preços - Última atualização: ${summary?.processed_at ? new Date(summary.processed_at).toLocaleString('pt-BR') : 'N/A'}`}
+        className="dashboard-header"
+        title={`Monitor de Inteligência de Preços ${TARGET_BRAND}`}
+        subtitle={`Análise competitiva para ${TARGET_BRAND} vs ${BENCHMARK_BRAND} - Última atualização: ${summary?.processed_at ? new Date(summary.processed_at).toLocaleString('pt-BR') : 'N/A'}`}
+        actions={
+          <button
+            type="button"
+            className="hamburger-button"
+            aria-label="Abrir menu lateral"
+            aria-expanded={isSidebarOpen}
+            onClick={() => setIsSidebarOpen(true)}
+          >
+            <span aria-hidden="true" />
+            <span aria-hidden="true" />
+            <span aria-hidden="true" />
+          </button>
+        }
       />
 
-      <div className="grid grid-4 section-gap">
-        <KPIWidget title="Total de Registros" value={summary?.total_records || 0} color="primary" />
-        <KPIWidget title="Marcas Monitoradas" value={summary?.total_brands || 0} color="info" />
-        <KPIWidget title="Marketplaces" value={summary?.total_marketplaces || 0} color="success" />
-        <KPIWidget
-          title="Alertas Gerados"
-          value={alerts.length}
-          subtitle={`${dangerAlerts} críticos - ${warningAlerts} atenção`}
-          color={dangerAlerts > 0 ? 'danger' : warningAlerts > 0 ? 'warning' : 'success'}
-        />
-      </div>
-
-      <div className="grid grid-70-30 section-gap">
-        <ChartCard
-          title="Evolução de Preço por SKU"
-          actions={
-            topSkus.length > 0 && (
-              <select
-                value={selectedSKU}
-                onChange={(event) => loadSelectedTimeline(event.target.value)}
-                className="control"
+      {isSidebarOpen && (
+        <div className="drawer-overlay" role="presentation" onClick={() => setIsSidebarOpen(false)}>
+          <aside
+            className="drawer-panel"
+            aria-label="Menu lateral"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="drawer-header">
+              <h2>Menu</h2>
+              <button
+                type="button"
+                className="drawer-close"
+                aria-label="Fechar menu lateral"
+                onClick={() => setIsSidebarOpen(false)}
               >
-                {topSkus.map(sku => (
-                  <option key={sku} value={sku}>{sku}</option>
-                ))}
-              </select>
-            )
-          }
-        >
-          <PriceLineChart
-            data={timelineChartData}
-            lines={[
-              { dataKey: 'avg_price', name: 'Preço médio', color: '#2563EB' },
-              { dataKey: 'min_price', name: 'Preço mínimo', color: '#059669' },
-              { dataKey: 'max_price', name: 'Preço máximo', color: '#D97706' }
-            ]}
-            height={350}
+                Fechar
+              </button>
+            </div>
+
+            <div className="quick-action-list">
+              <Button href="/brands" variant="primary">Analisar Marcas</Button>
+              <Button href="/marketplaces" variant="secondary">Ver Marketplaces</Button>
+              <Button href="/alerts" variant="secondary">Ver Alertas</Button>
+              <Button href="/skus" variant="secondary">Top SKUs</Button>
+              <Button href="/timeline" variant="secondary">Linha do Tempo</Button>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      <div className="dashboard-layout">
+        <div className="grid grid-4 section-gap">
+          <KPIWidget title="Total de Registros" value={summary?.total_records || 0} color="primary" />
+          <KPIWidget title="Marcas Monitoradas" value={summary?.total_brands || 0} color="info" />
+          <KPIWidget title="Marketplaces" value={summary?.total_marketplaces || 0} color="success" />
+          <KPIWidget
+            title={`Alertas ${TARGET_BRAND}`}
+            value={alerts.length}
+            subtitle={`${dangerAlerts} críticos - ${warningAlerts} atenção`}
+            color={dangerAlerts > 0 ? 'danger' : warningAlerts > 0 ? 'warning' : 'success'}
           />
-        </ChartCard>
+        </div>
 
-        <DashboardCard title="Alertas" padding="md">
-          <AlertPanel alerts={alerts} maxItems={6} />
-        </DashboardCard>
+        <div className="dashboard-content-grid">
+          <main className="dashboard-main">
+            <div className="dashboard-chart-grid">
+              <ChartCard
+                title="Evolução de Preço por SKU"
+                actions={
+                  topSkus.length > 0 && (
+                    <select
+                      value={selectedSKU}
+                      onChange={(event) => loadSelectedTimeline(event.target.value)}
+                      className="control"
+                    >
+                      {topSkus.map(sku => (
+                        <option key={sku} value={sku}>{sku}</option>
+                      ))}
+                    </select>
+                  )
+                }
+              >
+                <PriceLineChart
+                  data={timelineChartData}
+                  lines={[
+                    { dataKey: 'avg_price', name: 'Preço médio', color: '#2563EB' },
+                    { dataKey: 'min_price', name: 'Preço mínimo', color: '#059669' },
+                    { dataKey: 'max_price', name: 'Preço máximo', color: '#D97706' }
+                  ]}
+                  height={250}
+                />
+              </ChartCard>
+              <div className="compact-chart-grid">
+                <ChartCard title="Market Share por Marca">
+                  <MarketShareBar data={marketShareData} dataKey="value" horizontal height={112} />
+                </ChartCard>
+                <ChartCard title={`Preço Médio Spot - ${TARGET_BRAND} vs ${BENCHMARK_BRAND}`}>
+                  <MarketShareBar data={priceComparisonData} dataKey="value" height={112} format="currency" />
+                </ChartCard>
+                <ChartCard title="Preço Médio por Marketplace">
+                  <MarketShareBar data={marketplacePriceData} dataKey="value" horizontal height={112} format="currency" />
+                </ChartCard>
+                <ChartCard title="Preço Médio por Categoria">
+                  <MarketShareBar data={categoryPriceData} dataKey="value" horizontal height={112} format="currency" />
+                </ChartCard>
+              </div>
+            </div>
+          </main>
+
+          <aside className="dashboard-alerts-sidebar" aria-label="Alertas do dashboard">
+            <DashboardCard title={`Alertas ${TARGET_BRAND}`} padding="md">
+              <AlertPanel alerts={alerts} maxItems={6} />
+            </DashboardCard>
+          </aside>
+        </div>
       </div>
-
-      <div className="grid grid-2 section-gap">
-        <div className="stack">
-          <ChartCard title="Market Share por Marca">
-            <MarketShareBar data={marketShareData} dataKey="value" horizontal height={260} />
-          </ChartCard>
-          <ChartCard title={`Preço Médio Spot - ${TARGET_BRAND} vs ${BENCHMARK_BRAND}`}>
-            <MarketShareBar data={priceComparisonData} dataKey="value" height={260} format="currency" />
-          </ChartCard>
-        </div>
-
-        <div className="stack">
-          <ChartCard title="Preço Médio por Marketplace">
-            <MarketShareBar data={marketplacePriceData} dataKey="value" horizontal height={260} format="currency" />
-          </ChartCard>
-          <ChartCard title="Preço Médio por Categoria">
-            <MarketShareBar data={categoryPriceData} dataKey="value" height={260} format="currency" />
-          </ChartCard>
-        </div>
-      </div>
-
-      <DashboardCard title="Ações Rápidas">
-        <div className="action-row">
-          <Button href="/brands" variant="primary">Analisar Marcas</Button>
-          <Button href="/marketplaces" variant="secondary">Ver Marketplaces</Button>
-          <Button href="/alerts" variant="secondary">Ver Alertas</Button>
-          <Button href="/skus" variant="secondary">Top SKUs</Button>
-          <Button href="/timeline" variant="secondary">Linha do Tempo</Button>
-        </div>
-      </DashboardCard>
     </div>
   );
 }

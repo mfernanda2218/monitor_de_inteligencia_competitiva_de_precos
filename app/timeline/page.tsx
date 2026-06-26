@@ -132,6 +132,32 @@ function TimelineContent() {
         breadcrumb={{ label: 'Voltar ao Dashboard', href: '/' }}
       />
 
+      {timeline.length > 0 && (
+        <div className="grid grid-4 section-gap">
+          <KPIWidget
+            title="Preco Atual"
+            value={currentPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            color="primary"
+          />
+          <KPIWidget
+            title="Menor Preco"
+            value={minPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            color="success"
+          />
+          <KPIWidget
+            title="Maior Preco"
+            value={maxPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            color="warning"
+          />
+          <KPIWidget
+            title="Variacao do Periodo"
+            value={priceVariation.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            color="info"
+          />
+        </div>
+      )}
+
+      <div className={timeline.length > 0 ? 'timeline-layout' : undefined}>
       <ChartCard
         title="Evolução de Preço por SKU"
         actions={
@@ -145,10 +171,10 @@ function TimelineContent() {
             ))}
           </select>
         }
-        style={{ marginBottom: '32px' }}
+        style={{ marginBottom: timeline.length > 0 ? 0 : '20px' }}
       >
         {timeline.length > 0 ? (
-          <PriceLineChart data={chartData} lines={chartLines} height={400} />
+          <PriceLineChart data={chartData} lines={chartLines} height={240} />
         ) : (
           <div className="empty-chart">
             Selecione um SKU para visualizar a evolução de preços
@@ -156,41 +182,18 @@ function TimelineContent() {
         )}
       </ChartCard>
 
-      {timeline.length > 0 && (
-        <div className="grid grid-4 section-gap">
-          <KPIWidget
-            title="Preço Atual"
-            value={currentPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-            color="primary"
-          />
-          <KPIWidget
-            title="Menor Preço"
-            value={minPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-            color="success"
-          />
-          <KPIWidget
-            title="Maior Preço"
-            value={maxPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-            color="warning"
-          />
-          <KPIWidget
-            title="Variação do Período"
-            value={priceVariation.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-            color="info"
-          />
-        </div>
-      )}
 
       {timeline.length > 0 && (
         <DashboardCard title="Resumo do Período">
           <div className="metric-grid">
-            <MetricIndicator label="Data Inicial" value={formatDate(timeline[0]?.date) || 'N/D'} />
-            <MetricIndicator label="Data Final" value={formatDate(timeline[timeline.length - 1]?.date) || 'N/D'} />
-            <MetricIndicator label="Pontos de Dados" value={timeline.length} />
-            <MetricIndicator label="Volatilidade" value={volatility} />
+            <MetricIndicator label="Data Inicial" value={formatDate(timeline[0]?.date) || 'N/D'} size="sm" />
+            <MetricIndicator label="Data Final" value={formatDate(timeline[timeline.length - 1]?.date) || 'N/D'} size="sm" />
+            <MetricIndicator label="Pontos de Dados" value={timeline.length} size="sm" />
+            <MetricIndicator label="Volatilidade" value={volatility} size="sm" />
           </div>
         </DashboardCard>
       )}
+      </div>
     </div>
   );
 }

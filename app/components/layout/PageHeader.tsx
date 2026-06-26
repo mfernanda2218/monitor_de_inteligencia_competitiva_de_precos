@@ -20,7 +20,7 @@ export default function PageHeader({
   className = '' 
 }: PageHeaderProps) {
   return (
-    <div className={className} style={{ marginBottom: '32px' }}>
+    <div className={className} style={{ marginBottom: '16px' }}>
       {breadcrumb && (
         <Link
           href={breadcrumb.href}
@@ -30,9 +30,9 @@ export default function PageHeader({
             gap: '4px',
             color: '#2563EB',
             textDecoration: 'none',
-            fontSize: '0.875rem',
+            fontSize: '0.78rem',
             fontWeight: 500,
-            marginBottom: '12px',
+            marginBottom: '8px',
             transition: 'color 0.2s ease'
           }}
           onMouseEnter={(e) => {
@@ -49,22 +49,22 @@ export default function PageHeader({
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'flex-start',
-        gap: '16px',
+        gap: '12px',
         flexWrap: 'wrap'
       }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <h1 style={{
-            fontSize: '2rem',
+            fontSize: '1.35rem',
             fontWeight: 700,
             color: '#111827',
-            marginBottom: subtitle ? '8px' : 0,
+            marginBottom: subtitle ? '4px' : 0,
             lineHeight: 1.2
           }}>
             {title}
           </h1>
           {subtitle && (
             <p style={{
-              fontSize: '1rem',
+              fontSize: '0.82rem',
               color: '#6B7280',
               margin: 0,
               lineHeight: 1.5

@@ -32,11 +32,11 @@ export default function KPIWidget({
   return (
     <div className="card stat-card">
       {icon && (
-        <div style={{ marginBottom: '12px', fontSize: '1.5rem' }}>
+        <div style={{ marginBottom: '6px', fontSize: '1.15rem' }}>
           {icon}
         </div>
       )}
-      <div className="stat-label" style={{ marginBottom: '8px' }}>
+      <div className="stat-label" style={{ marginBottom: '4px' }}>
         {title}
       </div>
       <div 
@@ -47,19 +47,19 @@ export default function KPIWidget({
       </div>
       {trend && (
         <div style={{
-          fontSize: '0.875rem',
+          fontSize: '0.75rem',
           color: trend.isPositive ? '#059669' : '#DC2626',
           fontWeight: 500,
-          marginTop: '4px'
+          marginTop: '2px'
         }}>
           {trend.isPositive ? '↑' : '↓'} {Math.abs(trend.value).toFixed(1)}%
         </div>
       )}
       {subtitle && (
         <div style={{
-          fontSize: '0.75rem',
+          fontSize: '0.68rem',
           color: '#6B7280',
-          marginTop: '4px'
+          marginTop: '2px'
         }}>
           {subtitle}
         </div>

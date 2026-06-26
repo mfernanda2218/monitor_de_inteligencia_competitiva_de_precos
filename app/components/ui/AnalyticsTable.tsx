@@ -14,16 +14,19 @@ interface AnalyticsTableProps {
   data: any[];
   onRowClick?: (row: any) => void;
   className?: string;
+  pageSize?: number;
 }
 
 export default function AnalyticsTable({ 
   columns, 
   data, 
   onRowClick,
-  className = '' 
+  className = '',
+  pageSize = 7
 }: AnalyticsTableProps) {
   const [sortColumn, setSortColumn] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
 
   const handleSort = (key: string) => {
     if (sortColumn === key) {
@@ -32,6 +35,7 @@ export default function AnalyticsTable({
       setSortColumn(key);
       setSortDirection('asc');
     }
+    setCurrentPage(1);
   };
 
   const sortedData = [...data].sort((a, b) => {
@@ -53,6 +57,13 @@ export default function AnalyticsTable({
     return bStr.localeCompare(aStr);
   });
 
+  const totalPages = Math.max(1, Math.ceil(sortedData.length / pageSize));
+  const safeCurrentPage = Math.min(currentPage, totalPages);
+  const startIndex = (safeCurrentPage - 1) * pageSize;
+  const pageData = sortedData.slice(startIndex, startIndex + pageSize);
+  const visibleStart = sortedData.length === 0 ? 0 : startIndex + 1;
+  const visibleEnd = Math.min(startIndex + pageSize, sortedData.length);
+
   const getAlignStyle = (align?: string) => {
     switch (align) {
       case 'center': return { textAlign: 'center' as const };
@@ -69,7 +80,7 @@ export default function AnalyticsTable({
     }
   };
 
-  const tableMinWidth = Math.max(720, columns.length * 136);
+  const tableMinWidth = Math.max(600, columns.length * 110);
 
   return (
     <div className={`table-frame ${className}`}>
@@ -121,9 +132,9 @@ export default function AnalyticsTable({
             </tr>
           </thead>
           <tbody>
-            {sortedData.map((row, rowIndex) => (
+            {pageData.map((row, rowIndex) => (
               <tr
-                key={rowIndex}
+                key={startIndex + rowIndex}
                 onClick={() => onRowClick?.(row)}
                 style={{
                   cursor: onRowClick ? 'pointer' : 'default'
@@ -148,12 +159,40 @@ export default function AnalyticsTable({
       </div>
       {data.length === 0 && (
         <div style={{
-          padding: '48px 24px',
+          padding: '28px 16px',
           textAlign: 'center',
           color: '#6B7280',
-          fontSize: '0.875rem'
+          fontSize: '0.78rem'
         }}>
           Nenhum dado disponível
+        </div>
+      )}
+      {data.length > pageSize && (
+        <div className="table-pagination">
+          <span className="table-pagination-summary">
+            {visibleStart}-{visibleEnd} de {sortedData.length}
+          </span>
+          <div className="table-pagination-actions">
+            <button
+              type="button"
+              className="pagination-button"
+              onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
+              disabled={safeCurrentPage === 1}
+            >
+              Anterior
+            </button>
+            <span className="table-page-count">
+              {safeCurrentPage}/{totalPages}
+            </span>
+            <button
+              type="button"
+              className="pagination-button"
+              onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
+              disabled={safeCurrentPage === totalPages}
+            >
+              Proxima
+            </button>
+          </div>
         </div>
       )}
     </div>

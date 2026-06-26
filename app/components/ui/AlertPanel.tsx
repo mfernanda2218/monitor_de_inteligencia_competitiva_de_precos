@@ -57,7 +57,7 @@ export default function AlertPanel({ alerts, maxItems = 5, onAlertClick }: Alert
       <div>
         <div style={{
           textAlign: 'center',
-          padding: '32px 16px',
+          padding: '20px 12px',
           color: '#6B7280'
         }}>
           <div style={{ fontSize: '2rem', marginBottom: '8px' }}>✓</div>
@@ -69,13 +69,13 @@ export default function AlertPanel({ alerts, maxItems = 5, onAlertClick }: Alert
 
   return (
     <div>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {displayAlerts.map((alert) => (
           <div
             key={alert.id}
             onClick={() => onAlertClick?.(alert)}
             style={{
-              padding: '12px',
+              padding: '8px',
               borderRadius: '8px',
               background: getSeverityBg(alert.severity),
               borderLeft: `3px solid ${getSeverityColor(alert.severity)}`,
@@ -91,8 +91,8 @@ export default function AlertPanel({ alerts, maxItems = 5, onAlertClick }: Alert
               e.currentTarget.style.transform = 'translateX(0)';
             }}
           >
-            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
-              <div style={{ fontSize: '1.25rem', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+              <div style={{ fontSize: '1rem', flexShrink: 0 }}>
                 {getAlertIcon(alert.type)}
               </div>
               <div style={{ flex: 1, minWidth: 0 }}>
@@ -100,11 +100,11 @@ export default function AlertPanel({ alerts, maxItems = 5, onAlertClick }: Alert
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'flex-start',
-                  marginBottom: '4px',
+                  marginBottom: '2px',
                   gap: '8px'
                 }}>
                   <div style={{
-                    fontSize: '0.875rem',
+                    fontSize: '0.78rem',
                     fontWeight: 600,
                     color: '#111827',
                     flex: 1
@@ -125,7 +125,7 @@ export default function AlertPanel({ alerts, maxItems = 5, onAlertClick }: Alert
                   </span>
                 </div>
                 <div style={{
-                  fontSize: '0.75rem',
+                  fontSize: '0.7rem',
                   color: '#6B7280',
                   lineHeight: 1.4
                 }}>
@@ -135,7 +135,7 @@ export default function AlertPanel({ alerts, maxItems = 5, onAlertClick }: Alert
                   <div style={{
                     fontSize: '0.625rem',
                     color: '#9CA3AF',
-                    marginTop: '6px'
+                    marginTop: '4px'
                   }}>
                     {alert.timestamp}
                   </div>
@@ -147,7 +147,7 @@ export default function AlertPanel({ alerts, maxItems = 5, onAlertClick }: Alert
       </div>
       {alerts.length > maxItems && (
         <div style={{
-          marginTop: '12px',
+          marginTop: '8px',
           textAlign: 'center',
           fontSize: '0.75rem',
           color: '#6B7280'

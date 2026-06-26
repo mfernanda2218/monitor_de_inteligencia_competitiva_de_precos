@@ -176,10 +176,11 @@ export default function MarketplacesPage() {
         />
       </div>
 
-      <DashboardCard className="section-gap">
+      <DashboardCard className="section-gap" padding="sm">
         <AnalyticsTable
           columns={tableColumns}
           data={marketplacesArray}
+          pageSize={6}
         />
       </DashboardCard>
 

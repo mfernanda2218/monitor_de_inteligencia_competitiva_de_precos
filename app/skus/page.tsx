@@ -205,8 +205,8 @@ export default function SKUsPage() {
         <KPIWidget title="Premium Médio" value={avgPremium} color="info" />
       </div>
 
-      <DashboardCard title="Tabela de SKUs">
-        <AnalyticsTable columns={tableColumns} data={skuData} />
+      <DashboardCard title="Tabela de SKUs" padding="sm">
+        <AnalyticsTable columns={tableColumns} data={skuData} pageSize={6} />
       </DashboardCard>
     </div>
   );

@@ -16,9 +16,9 @@ export default function DashboardCard({
   style
 }: DashboardCardProps) {
   const paddingStyles = {
-    sm: '16px',
-    md: '20px',
-    lg: '24px'
+    sm: '10px',
+    md: '12px',
+    lg: '14px'
   };
 
   return (
@@ -31,10 +31,10 @@ export default function DashboardCard({
     >
       {title && (
         <h3 style={{
-          fontSize: '1rem',
+          fontSize: '0.78rem',
           fontWeight: 600,
           color: '#111827',
-          marginBottom: '16px',
+          marginBottom: '10px',
           textTransform: 'uppercase',
           letterSpacing: '0.05em'
         }}>

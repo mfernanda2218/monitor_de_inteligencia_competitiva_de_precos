@@ -31,7 +31,7 @@ export default function MarketShareBar({
   dataKey,
   nameKey = 'name',
   color = '#2563EB',
-  height = 400,
+  height = 220,
   horizontal = false,
   className = '',
   format = 'percentage'
@@ -51,7 +51,7 @@ export default function MarketShareBar({
           <XAxis 
             dataKey={horizontal ? 'value' : nameKey}
             stroke="#6B7280"
-            tick={{ fill: '#6B7280', fontSize: 12 }}
+            tick={{ fill: '#6B7280', fontSize: 10 }}
             tickLine={{ stroke: '#E5E7EB' }}
             axisLine={{ stroke: '#E5E7EB' }}
             type={horizontal ? 'number' : 'category'}
@@ -60,7 +60,7 @@ export default function MarketShareBar({
           <YAxis 
             dataKey={horizontal ? nameKey : 'value'}
             stroke="#6B7280"
-            tick={{ fill: '#6B7280', fontSize: 12 }}
+            tick={{ fill: '#6B7280', fontSize: 10 }}
             tickLine={{ stroke: '#E5E7EB' }}
             axisLine={{ stroke: '#E5E7EB' }}
             type={horizontal ? 'category' : 'number'}
@@ -71,10 +71,10 @@ export default function MarketShareBar({
               background: '#FFFFFF',
               border: '1px solid #E5E7EB',
               borderRadius: '8px',
-              padding: '12px',
+              padding: '8px',
               boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
             }}
-            itemStyle={{ fontSize: '0.875rem', color: '#111827' }}
+            itemStyle={{ fontSize: '0.75rem', color: '#111827' }}
             labelStyle={{ fontSize: '0.75rem', color: '#6B7280', marginBottom: '4px' }}
             formatter={(value: number) => format === 'currency' ? [`R$ ${value.toLocaleString()}`, 'Preço'] : [`${value.toFixed(1)}%`, 'Market Share']}
           />

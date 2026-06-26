@@ -3,7 +3,7 @@ import React from 'react';
 export interface Alert {
   id: string;
   type: 'price_gap' | 'market_share' | 'price_trend' | 'coverage' | 'category_performance' | 'brand_comparison' | 'competitor_share';
-  severity: 'danger' | 'warning' | 'success';
+  severity: 'danger' | 'warning' | 'success' | 'info';
   title: string;
   description: string;
   timestamp?: string;
@@ -22,6 +22,7 @@ export default function AlertPanel({ alerts, maxItems = 5, onAlertClick }: Alert
       case 'danger': return '#DC2626';
       case 'warning': return '#D97706';
       case 'success': return '#059669';
+      case 'info': return '#0891B2';
       default: return '#6B7280';
     }
   };
@@ -31,6 +32,7 @@ export default function AlertPanel({ alerts, maxItems = 5, onAlertClick }: Alert
       case 'danger': return '#FEE2E2';
       case 'warning': return '#FEF3C7';
       case 'success': return '#DCFCE7';
+      case 'info': return '#E0F2FE';
       default: return '#F3F4F6';
     }
   };
@@ -48,11 +50,11 @@ export default function AlertPanel({ alerts, maxItems = 5, onAlertClick }: Alert
     }
   };
 
-  const displayAlerts = alerts.slice(0, maxItems);
+  const displayAlerts = Array.isArray(alerts) ? alerts.slice(0, maxItems) : [];
 
   if (displayAlerts.length === 0) {
     return (
-      <div className="card">
+      <div>
         <div style={{
           textAlign: 'center',
           padding: '32px 16px',
@@ -66,17 +68,7 @@ export default function AlertPanel({ alerts, maxItems = 5, onAlertClick }: Alert
   }
 
   return (
-    <div className="card" style={{ padding: '16px' }}>
-      <h3 style={{
-        fontSize: '0.875rem',
-        fontWeight: 600,
-        color: '#111827',
-        textTransform: 'uppercase',
-        letterSpacing: '0.05em',
-        marginBottom: '16px'
-      }}>
-        Alertas Recentes ({alerts.length})
-      </h3>
+    <div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {displayAlerts.map((alert) => (
           <div

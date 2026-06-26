@@ -18,164 +18,178 @@ interface TimelineData {
   max_price: number;
 }
 
+function formatDate(dateString: string): string {
+  if (!dateString) return '';
+
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
+    return dateString;
+  }
+
+  let date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) {
+    const parts = dateString.split(/[-/]/);
+    if (parts.length === 3) {
+      date = parts[0].length === 4
+        ? new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
+        : new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
+    }
+  }
+
+  return Number.isNaN(date.getTime()) ? dateString : date.toLocaleDateString('pt-BR');
+}
+
+function parseBrazilianDate(dateString: string) {
+  const [day, month, year] = dateString.split('/');
+  if (day && month && year) {
+    return new Date(Number(year), Number(month) - 1, Number(day)).getTime();
+  }
+
+  return new Date(dateString).getTime();
+}
+
 function TimelineContent() {
   const searchParams = useSearchParams();
-  const sku = searchParams.get('sku') || '';
-  const [timeline, setTimeline] = useState<TimelineData[] | null>(null);
-  const [topSkus, setTopSkus] = useState<string[] | null>(null);
+  const initialSku = searchParams.get('sku') || '';
+  const [timeline, setTimeline] = useState<TimelineData[]>([]);
+  const [topSkus, setTopSkus] = useState<string[]>([]);
+  const [currentSku, setCurrentSku] = useState(initialSku);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const loadTimeline = async (skuToLoad: string) => {
+    if (!skuToLoad) {
+      setTimeline([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setCurrentSku(skuToLoad);
+
+    try {
+      const response = await fetch(`/api/timeline?sku=${encodeURIComponent(skuToLoad)}`);
+      if (!response.ok) {
+        throw new Error('Falha ao carregar dados da linha do tempo');
+      }
+
+      const data = await response.json();
+      setTimeline(Array.isArray(data) ? data : []);
+      setLoading(false);
+    } catch {
+      setError('Falha ao carregar dados da linha do tempo');
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetch('/api/top_skus')
-      .then(res => res.json())
-      .then(data => {
-        setTopSkus(data);
-        if (!sku && data.length > 0) {
-          loadTimeline(data[0]);
-        } else if (sku) {
-          loadTimeline(sku);
-        } else {
-          setLoading(false);
+      .then(res => {
+        if (!res.ok) {
+          throw new Error('Falha ao carregar SKUs');
         }
+        return res.json();
       })
-      .catch(err => {
+      .then(data => {
+        const skus = Array.isArray(data) ? data : [];
+        setTopSkus(skus);
+        loadTimeline(initialSku || skus[0] || '');
+      })
+      .catch(() => {
         setError('Falha ao carregar SKUs');
         setLoading(false);
       });
-  }, [sku]);
-
-  const loadTimeline = (skuToLoad: string) => {
-    setLoading(true);
-    fetch(`/api/timeline?sku=${skuToLoad}`)
-      .then(res => res.json())
-      .then(data => {
-        setTimeline(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        setError('Falha ao carregar dados da linha do tempo');
-        setLoading(false);
-      });
-  };
+  }, [initialSku]);
 
   if (loading) return <LoadingState message="Carregando linha do tempo..." />;
   if (error) return <ErrorState message={error} />;
 
-  const currentPrice = timeline && timeline.length > 0 ? timeline[timeline.length - 1].avg_price : 0;
-  const minPrice = timeline && timeline.length > 0 ? Math.min(...timeline.map(t => t.min_price)) : 0;
-  const maxPrice = timeline && timeline.length > 0 ? Math.max(...timeline.map(t => t.max_price)) : 0;
+  const currentPrice = timeline.length > 0 ? timeline[timeline.length - 1].avg_price : 0;
+  const minPrice = timeline.length > 0 ? Math.min(...timeline.map(t => t.min_price)) : 0;
+  const maxPrice = timeline.length > 0 ? Math.max(...timeline.map(t => t.max_price)) : 0;
   const priceVariation = maxPrice - minPrice;
+  const volatility = currentPrice > 0 ? `${((priceVariation / currentPrice) * 100).toFixed(1)}%` : 'N/D';
 
-  const formatDate = (dateString: string): string => {
-    if (!dateString) return '';
-
-    // Se o backend já enviou dd/mm/yyyy → retorna direto (melhor performance)
-    if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
-      return dateString;
-    }
-
-    // Tenta converter de outros formatos (YYYY-MM-DD, etc.)
-    let date = new Date(dateString);
-
-    if (isNaN(date.getTime())) {
-      // Tenta split manual se for dd/mm/yyyy com outro separador
-      const parts = dateString.split(/[-/]/);
-      if (parts.length === 3) {
-        if (parts[0].length === 4) { // YYYY-MM-DD
-          date = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
-        } else { // DD/MM/YYYY
-          date = new Date(Number(parts[2]), Number(parts[1]) - 1, Number(parts[0]));
-        }
-      }
-    }
-
-    if (isNaN(date.getTime())) {
-      return dateString; // fallback
-    }
-
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
-
-    return `${day}/${month}/${year}`;
-  };
-
-  const chartData = timeline?.map(t => ({
-    date: formatDate(t.date),
-    avg_price: t.avg_price,
-    min_price: t.min_price,
-    max_price: t.max_price
-  })) || [];
+  const chartData = timeline
+    .map(t => ({
+      date: formatDate(t.date),
+      avg_price: t.avg_price,
+      min_price: t.min_price,
+      max_price: t.max_price
+    }))
+    .sort((a, b) => parseBrazilianDate(a.date) - parseBrazilianDate(b.date));
 
   const chartLines = [
-    { dataKey: 'avg_price', name: 'Preço Médio', color: '#2563EB' },
-    { dataKey: 'min_price', name: 'Preço Mínimo', color: '#059669' },
-    { dataKey: 'max_price', name: 'Preço Máximo', color: '#D97706' }
+    { dataKey: 'avg_price', name: 'Preço médio', color: '#2563EB' },
+    { dataKey: 'min_price', name: 'Preço mínimo', color: '#059669' },
+    { dataKey: 'max_price', name: 'Preço máximo', color: '#D97706' }
   ];
 
   return (
-    <div className="container" style={{ padding: '32px 20px' }}>
+    <div className="container page-shell">
       <PageHeader
         title="Linha do Tempo de Preços"
-        subtitle="Evolução histórica de preços por SKU"
+        subtitle={`Evolução histórica de preços por SKU - SKU: ${currentSku || 'N/D'}`}
         breadcrumb={{ label: 'Voltar ao Dashboard', href: '/' }}
       />
 
-      <DashboardCard style={{ marginBottom: '32px' }}>
-        <div style={{ marginBottom: '12px' }}>
-          <label style={{ display: 'block', marginBottom: '8px', color: '#374151', fontWeight: 500 }}>
-            Selecionar SKU:
-          </label>
+      <ChartCard
+        title="Evolução de Preço por SKU"
+        actions={
           <select
-            value={sku}
-            onChange={(e) => loadTimeline(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '12px',
-              background: '#FFFFFF',
-              border: '1px solid #E5E7EB',
-              borderRadius: '8px',
-              color: '#111827',
-              fontSize: '1rem',
-              cursor: 'pointer'
-            }}
+            value={currentSku}
+            onChange={(event) => loadTimeline(event.target.value)}
+            className="control"
           >
-            {topSkus?.map(s => (
-              <option key={s} value={s}>{s}</option>
+            {topSkus.map(sku => (
+              <option key={sku} value={sku}>{sku}</option>
             ))}
           </select>
-        </div>
-      </DashboardCard>
-
-      {timeline && timeline.length > 0 && (
-        <>
-          <ChartCard title={`Evolução de Preço: ${sku}`} style={{ marginBottom: '32px' }}>
-            <PriceLineChart
-              data={chartData}
-              lines={chartLines}
-              height={400}
-            />
-          </ChartCard>
-
-          <div className="grid grid-3">
-            <KPIWidget
-              title="Preço Atual"
-              value={`R$ ${currentPrice.toFixed(2)}`}
-              color="primary"
-            />
-            <KPIWidget
-              title="Menor Preço"
-              value={`R$ ${minPrice.toFixed(2)}`}
-              color="success"
-            />
-            <KPIWidget
-              title="Variação do Período"
-              value={`R$ ${priceVariation.toFixed(2)}`}
-              color="warning"
-            />
+        }
+        style={{ marginBottom: '32px' }}
+      >
+        {timeline.length > 0 ? (
+          <PriceLineChart data={chartData} lines={chartLines} height={400} />
+        ) : (
+          <div className="empty-chart">
+            Selecione um SKU para visualizar a evolução de preços
           </div>
-        </>
+        )}
+      </ChartCard>
+
+      {timeline.length > 0 && (
+        <div className="grid grid-4 section-gap">
+          <KPIWidget
+            title="Preço Atual"
+            value={currentPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            color="primary"
+          />
+          <KPIWidget
+            title="Menor Preço"
+            value={minPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            color="success"
+          />
+          <KPIWidget
+            title="Maior Preço"
+            value={maxPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            color="warning"
+          />
+          <KPIWidget
+            title="Variação do Período"
+            value={priceVariation.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            color="info"
+          />
+        </div>
+      )}
+
+      {timeline.length > 0 && (
+        <DashboardCard title="Resumo do Período">
+          <div className="metric-grid">
+            <MetricIndicator label="Data Inicial" value={formatDate(timeline[0]?.date) || 'N/D'} />
+            <MetricIndicator label="Data Final" value={formatDate(timeline[timeline.length - 1]?.date) || 'N/D'} />
+            <MetricIndicator label="Pontos de Dados" value={timeline.length} />
+            <MetricIndicator label="Volatilidade" value={volatility} />
+          </div>
+        </DashboardCard>
       )}
     </div>
   );

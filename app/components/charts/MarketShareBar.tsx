@@ -23,6 +23,7 @@ interface MarketShareBarProps {
   height?: number;
   horizontal?: boolean;
   className?: string;
+  format?: 'percentage' | 'currency';
 }
 
 export default function MarketShareBar({ 
@@ -32,7 +33,8 @@ export default function MarketShareBar({
   color = '#2563EB',
   height = 400,
   horizontal = false,
-  className = '' 
+  className = '',
+  format = 'percentage'
 }: MarketShareBarProps) {
   return (
     <div className={className} style={{ width: '100%', height }}>
@@ -53,7 +55,7 @@ export default function MarketShareBar({
             tickLine={{ stroke: '#E5E7EB' }}
             axisLine={{ stroke: '#E5E7EB' }}
             type={horizontal ? 'number' : 'category'}
-            tickFormatter={horizontal ? (value) => `${value}%` : undefined}
+            tickFormatter={horizontal ? (value) => format === 'currency' ? `R$ ${value.toLocaleString()}` : `${value}%` : undefined}
           />
           <YAxis 
             dataKey={horizontal ? nameKey : 'value'}
@@ -62,7 +64,7 @@ export default function MarketShareBar({
             tickLine={{ stroke: '#E5E7EB' }}
             axisLine={{ stroke: '#E5E7EB' }}
             type={horizontal ? 'category' : 'number'}
-            tickFormatter={horizontal ? undefined : (value) => `${value}%`}
+            tickFormatter={horizontal ? undefined : (value) => format === 'currency' ? `R$ ${value.toLocaleString()}` : `${value}%`}
           />
           <Tooltip 
             contentStyle={{ 
@@ -74,7 +76,7 @@ export default function MarketShareBar({
             }}
             itemStyle={{ fontSize: '0.875rem', color: '#111827' }}
             labelStyle={{ fontSize: '0.75rem', color: '#6B7280', marginBottom: '4px' }}
-            formatter={(value: number) => [`${value.toFixed(1)}%`, 'Market Share']}
+            formatter={(value: number) => format === 'currency' ? [`R$ ${value.toLocaleString()}`, 'Preço'] : [`${value.toFixed(1)}%`, 'Market Share']}
           />
           <Bar 
             dataKey={dataKey} 

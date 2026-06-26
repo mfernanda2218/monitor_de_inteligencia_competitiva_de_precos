@@ -1,14 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
 import { TARGET_BRAND, BENCHMARK_BRAND } from './config/brands';
 import PageHeader from './components/layout/PageHeader';
 import KPIWidget from './components/ui/KPIWidget';
 import DashboardCard from './components/ui/DashboardCard';
+import ChartCard from './components/ui/ChartCard';
+import AlertPanel, { Alert } from './components/ui/AlertPanel';
 import Button from './components/ui/Button';
 import LoadingState from './components/shared/LoadingState';
 import ErrorState from './components/shared/ErrorState';
+import PriceLineChart from './components/charts/PriceLineChart';
+import MarketShareBar from './components/charts/MarketShareBar';
 
 interface Summary {
   total_records: number;
@@ -19,121 +22,286 @@ interface Summary {
   processed_at: string;
 }
 
+interface TimelinePoint {
+  date: string;
+  avg_price: number;
+  min_price: number;
+  max_price: number;
+}
+
+interface BrandData {
+  brand: string;
+  count: number;
+  market_share: number;
+  avg_price: number;
+}
+
+interface MarketplaceData {
+  marketplace: string;
+  avg_price: number;
+}
+
+interface CategoryData {
+  category: string;
+  avg_price: number;
+  count: number;
+}
+
+const currencyFormatter = new Intl.NumberFormat('pt-BR', {
+  style: 'currency',
+  currency: 'BRL'
+});
+
+function formatDate(dateString: string) {
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateString)) {
+    return dateString;
+  }
+
+  const date = new Date(dateString);
+  return Number.isNaN(date.getTime()) ? dateString : date.toLocaleDateString('pt-BR');
+}
+
+function parseBrazilianDate(dateString: string) {
+  const [day, month, year] = dateString.split('/');
+  if (day && month && year) {
+    return new Date(Number(year), Number(month) - 1, Number(day)).getTime();
+  }
+
+  const date = new Date(dateString);
+  return date.getTime();
+}
+
+function toAlert(rawAlert: any, index: number): Alert {
+  return {
+    id: `${rawAlert.type || 'alert'}-${rawAlert.sku || rawAlert.brand || index}`,
+    type: rawAlert.type,
+    severity: rawAlert.severity || 'info',
+    title: rawAlert.brand || rawAlert.competitor || 'Mercado',
+    description: rawAlert.message || 'Alerta sem descrição',
+    timestamp: rawAlert.sku ? `SKU: ${rawAlert.sku}` : undefined,
+    metadata: rawAlert
+  };
+}
+
 export default function Dashboard() {
   const [summary, setSummary] = useState<Summary | null>(null);
+  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [timelineData, setTimelineData] = useState<TimelinePoint[]>([]);
+  const [brandData, setBrandData] = useState<BrandData[]>([]);
+  const [marketplaceData, setMarketplaceData] = useState<MarketplaceData[]>([]);
+  const [categoryData, setCategoryData] = useState<CategoryData[]>([]);
+  const [topSkus, setTopSkus] = useState<string[]>([]);
+  const [selectedSKU, setSelectedSKU] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/summary')
-      .then(res => res.json())
-      .then(data => {
-        setSummary(data);
+    const fetchJson = async (url: string) => {
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Falha ao carregar ${url}`);
+      }
+      return response.json();
+    };
+
+    const loadTimeline = async (sku: string) => {
+      const timeline = await fetchJson(`/api/timeline?sku=${encodeURIComponent(sku)}`);
+      setTimelineData(Array.isArray(timeline) ? timeline : []);
+    };
+
+    const fetchData = async () => {
+      try {
+        const [summaryData, alertsData, brandsData, marketplacesData, categoriesData, skusData] = await Promise.all([
+          fetchJson('/api/summary'),
+          fetchJson('/api/alerts'),
+          fetchJson('/api/brands'),
+          fetchJson('/api/marketplaces'),
+          fetchJson('/api/categories'),
+          fetchJson('/api/top_skus')
+        ]);
+
+        setSummary(summaryData);
+        setAlerts(Array.isArray(alertsData) ? alertsData.map(toAlert) : []);
+
+        const totalRecords = summaryData?.total_records || 0;
+        const formattedBrands = Object.entries(brandsData || {}).map(([brand, value]: [string, any]) => ({
+          brand,
+          count: value.count || 0,
+          market_share: totalRecords > 0 ? ((value.count || 0) / totalRecords) * 100 : 0,
+          avg_price: value.avg_spot_price || 0
+        }));
+        setBrandData(formattedBrands);
+
+        setMarketplaceData(Object.entries(marketplacesData || {}).map(([marketplace, value]: [string, any]) => ({
+          marketplace,
+          avg_price: value.avg_spot_price || 0
+        })));
+
+        setCategoryData(Object.entries(categoriesData || {}).map(([category, value]: [string, any]) => ({
+          category,
+          avg_price: value.avg_spot_price || 0,
+          count: value.count || 0
+        })));
+
+        const skus = Array.isArray(skusData) ? skusData : [];
+        setTopSkus(skus);
+
+        if (skus.length > 0) {
+          setSelectedSKU(skus[0]);
+          await loadTimeline(skus[0]);
+        }
+
         setLoading(false);
-      })
-      .catch(err => {
-        setError('Falha ao carregar dados');
+      } catch (err) {
+        setError('Falha ao carregar dados do dashboard');
         setLoading(false);
-      });
+      }
+    };
+
+    fetchData();
   }, []);
+
+  const loadSelectedTimeline = async (sku: string) => {
+    setSelectedSKU(sku);
+    try {
+      const response = await fetch(`/api/timeline?sku=${encodeURIComponent(sku)}`);
+      if (!response.ok) {
+        setTimelineData([]);
+        return;
+      }
+
+      const timeline = await response.json();
+      setTimelineData(Array.isArray(timeline) ? timeline : []);
+    } catch (err) {
+      setTimelineData([]);
+    }
+  };
+
+  const dangerAlerts = alerts.filter(a => a.severity === 'danger').length;
+  const warningAlerts = alerts.filter(a => a.severity === 'warning').length;
 
   if (loading) return <LoadingState message="Carregando dashboard..." />;
   if (error) return <ErrorState message={error} />;
 
+  const timelineChartData = timelineData
+    .map(item => ({
+      date: formatDate(item.date),
+      avg_price: item.avg_price,
+      min_price: item.min_price,
+      max_price: item.max_price
+    }))
+    .sort((a, b) => parseBrazilianDate(a.date) - parseBrazilianDate(b.date));
+
+  const marketShareData = brandData
+    .map(brand => ({
+      name: brand.brand,
+      value: brand.market_share
+    }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 10);
+
+  const targetBrand = brandData.find(b => b.brand.toUpperCase() === TARGET_BRAND.toUpperCase());
+  const benchmarkBrand = brandData.find(b => b.brand.toUpperCase() === BENCHMARK_BRAND.toUpperCase());
+  const priceComparisonData = [
+    { name: TARGET_BRAND, value: targetBrand?.avg_price || 0 },
+    { name: BENCHMARK_BRAND, value: benchmarkBrand?.avg_price || 0 }
+  ].filter(item => item.value > 0);
+
+  const marketplacePriceData = marketplaceData
+    .map(mp => ({
+      name: mp.marketplace,
+      value: mp.avg_price
+    }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 10);
+
+  const categoryPriceData = categoryData
+    .map(cat => ({
+      name: cat.category,
+      value: cat.avg_price
+    }))
+    .sort((a, b) => b.value - a.value)
+    .slice(0, 10);
+
   return (
-    <div className="container" style={{ padding: '32px 20px' }}>
+    <div className="container page-shell">
       <PageHeader
         title="Monitor de Inteligência de Preços"
-        subtitle={`Dashboard de análise competitiva de preços • Última atualização: ${summary?.processed_at ? new Date(summary.processed_at).toLocaleString() : 'N/A'}`}
+        subtitle={`Dashboard de análise competitiva de preços - Última atualização: ${summary?.processed_at ? new Date(summary.processed_at).toLocaleString('pt-BR') : 'N/A'}`}
       />
 
-      <div className="grid grid-4" style={{ marginBottom: '32px' }}>
+      <div className="grid grid-4 section-gap">
+        <KPIWidget title="Total de Registros" value={summary?.total_records || 0} color="primary" />
+        <KPIWidget title="Marcas Monitoradas" value={summary?.total_brands || 0} color="info" />
+        <KPIWidget title="Marketplaces" value={summary?.total_marketplaces || 0} color="success" />
         <KPIWidget
-          title="Total de Registros"
-          value={summary?.total_records || 0}
-          color="primary"
-        />
-        <KPIWidget
-          title="Marcas"
-          value={summary?.total_brands || 0}
-          color="info"
-        />
-        <KPIWidget
-          title="Marketplaces"
-          value={summary?.total_marketplaces || 0}
-          color="success"
-        />
-        <KPIWidget
-          title="SKUs Acompanhados"
-          value={summary?.total_skus || 0}
-          color="warning"
+          title="Alertas Gerados"
+          value={alerts.length}
+          subtitle={`${dangerAlerts} críticos - ${warningAlerts} atenção`}
+          color={dangerAlerts > 0 ? 'danger' : warningAlerts > 0 ? 'warning' : 'success'}
         />
       </div>
 
-      <div className="grid grid-70-30" style={{ marginBottom: '32px' }}>
-        <DashboardCard title="Ações Rápidas">
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <Button href="/brands" variant="primary">
-              Analisar Marcas →
-            </Button>
-            <Button href="/marketplaces" variant="secondary">
-              Ver Marketplaces →
-            </Button>
-            <Button href="/alerts" variant="secondary">
-              Ver Alertas →
-            </Button>
-            <Button href="/timeline" variant="secondary">
-              Linha do Tempo de Preços →
-            </Button>
-          </div>
-        </DashboardCard>
+      <div className="grid grid-70-30 section-gap">
+        <ChartCard
+          title="Evolução de Preço por SKU"
+          actions={
+            topSkus.length > 0 && (
+              <select
+                value={selectedSKU}
+                onChange={(event) => loadSelectedTimeline(event.target.value)}
+                className="control"
+              >
+                {topSkus.map(sku => (
+                  <option key={sku} value={sku}>{sku}</option>
+                ))}
+              </select>
+            )
+          }
+        >
+          <PriceLineChart
+            data={timelineChartData}
+            lines={[
+              { dataKey: 'avg_price', name: 'Preço médio', color: '#2563EB' },
+              { dataKey: 'min_price', name: 'Preço mínimo', color: '#059669' },
+              { dataKey: 'max_price', name: 'Preço máximo', color: '#D97706' }
+            ]}
+            height={350}
+          />
+        </ChartCard>
 
-        <DashboardCard title="Categorias">
-          <div style={{ color: '#6B7280' }}>
-            <div style={{ marginBottom: '12px' }}>
-              <span style={{ color: '#6B7280' }}>Total de Categorias: </span>
-              <span style={{ color: '#059669', fontWeight: 600 }}>
-                {summary?.total_categories || 0}
-              </span>
-            </div>
-            <p style={{ fontSize: '0.875rem', margin: 0 }}>
-              Explore a análise detalhada de categorias nas seções dedicadas.
-            </p>
-          </div>
+        <DashboardCard title="Alertas" padding="md">
+          <AlertPanel alerts={alerts} maxItems={6} />
         </DashboardCard>
       </div>
 
-      <DashboardCard title="Resumo Executivo" style={{ marginBottom: '32px' }}>
-        <p style={{ color: '#374151', lineHeight: 1.8, margin: 0 }}>
-          Este dashboard fornece inteligência competitiva em tempo real sobre preços em múltiplos marketplaces.
-          Monitore <strong>{summary?.total_records?.toLocaleString() || 0}</strong> pontos de preço de <strong>{summary?.total_brands || 0}</strong> marcas
-          em <strong>{summary?.total_marketplaces || 0}</strong> marketplaces. Use a navegação acima para mergulhar mais fundo em
-          desempenho específico de marcas, cobertura de marketplaces e alertas de preços.
-        </p>
-      </DashboardCard>
-
-      <DashboardCard 
-        title={`⚔️ ${TARGET_BRAND} vs ${BENCHMARK_BRAND}`}
-        style={{ border: '2px solid #2563EB' }}
-      >
-        <div style={{ color: '#374151', lineHeight: 1.8, marginBottom: '20px' }}>
-          <p style={{ marginBottom: '12px', margin: 0 }}>
-            <strong style={{ color: '#059669' }}>Foco:</strong> Análise competitiva focada em {TARGET_BRAND} com {BENCHMARK_BRAND} como benchmark principal
-          </p>
-          <p style={{ marginBottom: '12px', margin: 0 }}>
-            <strong style={{ color: '#D97706' }}>Objetivo:</strong> Identificar oportunidades de precificação e posicionamento de mercado para {TARGET_BRAND}
-          </p>
-          <p style={{ margin: 0 }}>
-            <strong style={{ color: '#2563EB' }}>Métricas:</strong> Market share, posicionamento de preço, cobertura de marketplace e tendências competitivas
-          </p>
+      <div className="grid grid-2 section-gap">
+        <div className="stack">
+          <ChartCard title="Market Share por Marca">
+            <MarketShareBar data={marketShareData} dataKey="value" horizontal height={260} />
+          </ChartCard>
+          <ChartCard title={`Preço Médio Spot - ${TARGET_BRAND} vs ${BENCHMARK_BRAND}`}>
+            <MarketShareBar data={priceComparisonData} dataKey="value" height={260} format="currency" />
+          </ChartCard>
         </div>
-        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-          <Button href="/brands" variant="primary">
-            Ver Comparativo Detalhado →
-          </Button>
-          <Button href="/alerts" variant="secondary">
-            Ver Alertas {TARGET_BRAND} →
-          </Button>
+
+        <div className="stack">
+          <ChartCard title="Preço Médio por Marketplace">
+            <MarketShareBar data={marketplacePriceData} dataKey="value" horizontal height={260} format="currency" />
+          </ChartCard>
+          <ChartCard title="Preço Médio por Categoria">
+            <MarketShareBar data={categoryPriceData} dataKey="value" height={260} format="currency" />
+          </ChartCard>
+        </div>
+      </div>
+
+      <DashboardCard title="Ações Rápidas">
+        <div className="action-row">
+          <Button href="/brands" variant="primary">Analisar Marcas</Button>
+          <Button href="/marketplaces" variant="secondary">Ver Marketplaces</Button>
+          <Button href="/alerts" variant="secondary">Ver Alertas</Button>
+          <Button href="/skus" variant="secondary">Top SKUs</Button>
+          <Button href="/timeline" variant="secondary">Linha do Tempo</Button>
         </div>
       </DashboardCard>
     </div>

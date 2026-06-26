@@ -61,8 +61,8 @@ export default function AnalyticsTable({
   };
 
   return (
-    <div className={`card ${className}`} style={{ padding: 0, overflow: 'hidden' }}>
-      <div style={{ overflowX: 'auto' }}>
+    <div className={`table-frame ${className}`}>
+      <div className="table-scroll">
         <table className="table" style={{ margin: 0 }}>
           <thead>
             <tr>

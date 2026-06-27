@@ -15,7 +15,7 @@ export default function Sidebar() {
     const pathname = usePathname();
 
     const isActive = (path: string) => {
-        if (path === '/dashboard') return pathname === '/dashboard' || pathname === '/';
+        if (path === '/') return pathname === '/' || pathname === '/';
         return pathname?.startsWith(path);
     };
 

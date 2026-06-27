@@ -5,5 +5,8 @@
   "deploy": {
     "startCommand": "npm run start",
     "restartPolicyType": "ON_FAILURE"
+  },
+  "env": {
+    "NODE_VERSION": "20.9.0"
   }
 }

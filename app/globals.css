@@ -601,17 +601,44 @@ textarea {
 }
 
 body,
-html,
-.page-wrapper {
-  height: auto;
-  min-height: 100vh;
-  overflow-y: auto;
+html {
+  height: 100vh;
   overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .page-wrapper {
-  height: 100vh;
-  overflow: hidden;
+  min-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: 40px;
+}
+
+/* Ajustes em containers internos */
+.dashboard-layout,
+.dashboard-content-grid,
+.main-content {
+  min-height: 0;
+  flex: 1;
+  overflow: visible;
+}
+
+.content-area,
+.scroll-area {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Garante que cards e tabelas não quebrem o fluxo */
+.card,
+.DashboardCard,
+.ChartCard {
+  overflow: visible;
+}
+
+.page-wrapper {
+  height: auto !important;
 }
 
 .dashboard-layout {

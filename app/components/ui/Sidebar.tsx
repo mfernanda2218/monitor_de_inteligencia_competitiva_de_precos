@@ -27,7 +27,7 @@ export default function Sidebar() {
             </div>
 
             <nav className="sidebar-nav">
-                <Link href="/dashboard" className={`nav-item ${isActive('/dashboard') ? 'active' : ''}`}>
+                <Link href="/" className={`nav-item ${isActive('/') ? 'active' : ''}`}>
                     <LayoutDashboard size={20} strokeWidth={2} />
                     <span>Dashboard</span>
                 </Link>

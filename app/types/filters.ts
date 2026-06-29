@@ -2,7 +2,9 @@
 export interface FiltersState {
     // Filtros comuns
     marketplaces: string[];
+    brands: string[];
     categories: string[];
+    alertSeverity: string[];
     minPrice: number | null;
     maxPrice: number | null;
     minMarketShare: number | null;
@@ -14,17 +16,18 @@ export interface FiltersState {
     orderBy: string;
     orderDirection: 'asc' | 'desc';
 
-    // Filtros específicos de marcas
-    brands: string[];
-    targetBrandOnly: boolean;
-
     // Filtros específicos de marketplaces
     minBrands: number | null;
+
+    // Filtros específicos de marcas
+    targetBrandOnly: boolean;
 }
 
 export const defaultFilters: FiltersState = {
     marketplaces: [],
+    brands: [],
     categories: [],
+    alertSeverity: [],
     minPrice: null,
     maxPrice: null,
     minMarketShare: null,
@@ -32,7 +35,6 @@ export const defaultFilters: FiltersState = {
     period: { start: null, end: null },
     orderBy: 'marketShare',
     orderDirection: 'desc',
-    brands: [],
-    targetBrandOnly: false,
     minBrands: null,
+    targetBrandOnly: false,
 };

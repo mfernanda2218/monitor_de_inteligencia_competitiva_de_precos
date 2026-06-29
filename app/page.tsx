@@ -1,3 +1,4 @@
+// app/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -11,8 +12,9 @@ import LoadingState from './components/shared/LoadingState';
 import ErrorState from './components/shared/ErrorState';
 import PriceLineChart from './components/charts/PriceLineChart';
 import MarketShareBar from './components/charts/MarketShareBar';
-import FilterBar from './components/filters/FilterBar';
+import FiltersBar from './components/ui/FiltersBar';
 import { useFilters } from './contexts/FilterContext';
+import { FiltersState } from './types/filters';
 
 interface Summary {
   total_records: number;
@@ -49,6 +51,11 @@ interface CategoryData {
   count: number;
 }
 
+interface FilterOption {
+  value: string;
+  label: string;
+}
+
 function toAlert(rawAlert: any, index: number): Alert {
   return {
     id: `${rawAlert.type || 'alert'}-${rawAlert.sku || rawAlert.brand || index}`,
@@ -61,8 +68,8 @@ function toAlert(rawAlert: any, index: number): Alert {
   };
 }
 
-// Função para construir URL com filtros (sem período)
-const buildFilteredUrl = (baseUrl: string, filters: any) => {
+// Função para construir URL com filtros
+const buildFilteredUrl = (baseUrl: string, filters: FiltersState) => {
   const params = new URLSearchParams();
 
   if (filters.brands?.length > 0) {
@@ -83,7 +90,7 @@ const buildFilteredUrl = (baseUrl: string, filters: any) => {
 };
 
 export default function Dashboard() {
-  const { filters } = useFilters();
+  const { filters, setFilters, clearFilters } = useFilters();
 
   const [summary, setSummary] = useState<Summary | null>(null);
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -96,6 +103,42 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loadingTimeline, setLoadingTimeline] = useState(false);
+  const [filterOptions, setFilterOptions] = useState<{
+    marketplaces: FilterOption[];
+    categories: FilterOption[];
+    brands: FilterOption[];
+  }>({
+    marketplaces: [],
+    categories: [],
+    brands: [],
+  });
+
+  // Carregar opções de filtro
+  useEffect(() => {
+    const fetchOptions = async () => {
+      try {
+        const [brandsRes, marketplacesRes, categoriesRes] = await Promise.all([
+          fetch('/api/brands'),
+          fetch('/api/marketplaces'),
+          fetch('/api/categories')
+        ]);
+
+        const brandsData = await brandsRes.json();
+        const marketplacesData = await marketplacesRes.json();
+        const categoriesData = await categoriesRes.json();
+
+        setFilterOptions({
+          brands: Object.keys(brandsData || {}).map((k: string) => ({ value: k, label: k })),
+          marketplaces: Object.keys(marketplacesData || {}).map((k: string) => ({ value: k, label: k })),
+          categories: Object.keys(categoriesData || {}).map((k: string) => ({ value: k, label: k })),
+        });
+      } catch (error) {
+        console.error('Error fetching filter options:', error);
+      }
+    };
+
+    fetchOptions();
+  }, []);
 
   const fetchJson = async (url: string, defaultValue: any = null) => {
     try {
@@ -253,7 +296,19 @@ export default function Dashboard() {
         subtitle={`Análise competitiva para ${TARGET_BRAND} vs ${BENCHMARK_BRAND} - Última atualização: ${summary?.processed_at ? new Date(summary.processed_at).toLocaleString('pt-BR') : 'N/A'}`}
       />
 
-      <FilterBar />
+      <FiltersBar
+        filters={filters}
+        onFilterChange={setFilters}
+        onClearFilters={clearFilters}
+        options={{
+          marketplaces: filterOptions.marketplaces,
+          categories: filterOptions.categories,
+          brands: filterOptions.brands,
+        }}
+        mode="brands"
+        totalResults={brandData.length}
+        isLoading={loading}
+      />
 
       {!hasData ? (
         <div className="card" style={{ padding: '40px', textAlign: 'center' }}>

@@ -1,9 +1,9 @@
 // hooks/useFilters.ts
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
-import { FiltersState, defaultFilters } from '@/app/types/filters';
+import { FiltersState, defaultFilters } from '../types/filters';
 
 export function useFilters(initialFilters?: Partial<FiltersState>) {
     const router = useRouter();
@@ -16,6 +16,7 @@ export function useFilters(initialFilters?: Partial<FiltersState>) {
             marketplaces: params.getAll('marketplace'),
             categories: params.getAll('category'),
             brands: params.getAll('brand'),
+            alertSeverity: params.getAll('severity'),
             minPrice: params.get('minPrice') ? Number(params.get('minPrice')) : null,
             maxPrice: params.get('maxPrice') ? Number(params.get('maxPrice')) : null,
             minMarketShare: params.get('minMarketShare') ? Number(params.get('minMarketShare')) : null,
@@ -51,6 +52,7 @@ export function useFilters(initialFilters?: Partial<FiltersState>) {
         filters.marketplaces.forEach(m => params.append('marketplace', m));
         filters.categories.forEach(c => params.append('category', c));
         filters.brands?.forEach(b => params.append('brand', b));
+        filters.alertSeverity?.forEach(s => params.append('severity', s));
 
         if (filters.minPrice !== null) params.set('minPrice', String(filters.minPrice));
         if (filters.maxPrice !== null) params.set('maxPrice', String(filters.maxPrice));
@@ -67,12 +69,23 @@ export function useFilters(initialFilters?: Partial<FiltersState>) {
         router.push(queryString ? `?${queryString}` : '?', { scroll: false });
     }, [filters, router]);
 
+    const hasFilters = Object.entries(filters).some(([key, value]) => {
+        if (key === 'period') {
+            return !!(value?.start || value?.end);
+        }
+        if (Array.isArray(value)) {
+            return value.length > 0;
+        }
+        if (key === 'orderBy' || key === 'orderDirection') {
+            return false;
+        }
+        return value !== null && value !== '' && value !== false;
+    });
+
     return {
         filters,
         setFilters,
         clearFilters,
-        hasFilters: Object.values(filters).some(v =>
-            Array.isArray(v) ? v.length > 0 : v !== null && v !== '' && v !== false
-        ),
+        hasFilters,
     };
 }

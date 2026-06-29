@@ -95,7 +95,7 @@ export default function FiltersBar({
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                marginBottom: '16px',
+                marginBottom: '12px',
                 flexWrap: 'wrap',
                 gap: '8px'
             }}>
@@ -145,15 +145,16 @@ export default function FiltersBar({
                 </div>
             </div>
 
-            {/* Filtros em linha - estilo dashboard */}
+            {/* Linha 1: Filtros principais - Marketplaces, Categorias, Marcas */}
             <div style={{
                 display: 'flex',
                 flexWrap: 'wrap',
-                gap: '20px',
-                alignItems: 'flex-start'
+                gap: '16px 20px',
+                alignItems: 'flex-start',
+                marginBottom: '12px'
             }}>
                 {/* Marketplaces */}
-                <div style={{ minWidth: '200px' }}>
+                <div style={{ minWidth: '180px', flex: '1 1 180px' }}>
                     <label style={{
                         display: 'block',
                         fontSize: '0.68rem',
@@ -169,7 +170,7 @@ export default function FiltersBar({
                         value=""
                         onChange={(e) => e.target.value && addItem('marketplaces', e.target.value)}
                         className="control"
-                        style={{ minWidth: '170px' }}
+                        style={{ width: '100%', minWidth: '150px' }}
                     >
                         <option value="">Selecione...</option>
                         {options.marketplaces.map((mp) => (
@@ -182,7 +183,7 @@ export default function FiltersBar({
                             </option>
                         ))}
                     </select>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
                         {localFilters.marketplaces.map((mp) => (
                             <span
                                 key={mp}
@@ -192,7 +193,7 @@ export default function FiltersBar({
                                     gap: '4px',
                                     background: '#E0F2FE',
                                     color: '#0369A1',
-                                    fontSize: '0.68rem',
+                                    fontSize: '0.65rem',
                                     fontWeight: 500,
                                     padding: '2px 8px',
                                     borderRadius: '9999px'
@@ -200,7 +201,7 @@ export default function FiltersBar({
                             >
                                 {mp}
                                 <X
-                                    size={14}
+                                    size={12}
                                     style={{ cursor: 'pointer', opacity: 0.6 }}
                                     onClick={() => removeItem('marketplaces', mp)}
                                     onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
@@ -212,7 +213,7 @@ export default function FiltersBar({
                 </div>
 
                 {/* Categorias */}
-                <div style={{ minWidth: '180px' }}>
+                <div style={{ minWidth: '160px', flex: '1 1 160px' }}>
                     <label style={{
                         display: 'block',
                         fontSize: '0.68rem',
@@ -228,7 +229,7 @@ export default function FiltersBar({
                         value=""
                         onChange={(e) => e.target.value && addItem('categories', e.target.value)}
                         className="control"
-                        style={{ minWidth: '150px' }}
+                        style={{ width: '100%', minWidth: '130px' }}
                     >
                         <option value="">Selecione...</option>
                         {options.categories.map((cat) => (
@@ -241,7 +242,7 @@ export default function FiltersBar({
                             </option>
                         ))}
                     </select>
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
                         {localFilters.categories.map((cat) => (
                             <span
                                 key={cat}
@@ -251,7 +252,7 @@ export default function FiltersBar({
                                     gap: '4px',
                                     background: '#DCFCE7',
                                     color: '#15803D',
-                                    fontSize: '0.68rem',
+                                    fontSize: '0.65rem',
                                     fontWeight: 500,
                                     padding: '2px 8px',
                                     borderRadius: '9999px'
@@ -259,7 +260,7 @@ export default function FiltersBar({
                             >
                                 {cat}
                                 <X
-                                    size={14}
+                                    size={12}
                                     style={{ cursor: 'pointer', opacity: 0.6 }}
                                     onClick={() => removeItem('categories', cat)}
                                     onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
@@ -272,7 +273,7 @@ export default function FiltersBar({
 
                 {/* Marcas (apenas para marketplaces) */}
                 {mode === 'marketplaces' && options.brands.length > 0 && (
-                    <div style={{ minWidth: '180px' }}>
+                    <div style={{ minWidth: '160px', flex: '1 1 160px' }}>
                         <label style={{
                             display: 'block',
                             fontSize: '0.68rem',
@@ -288,7 +289,7 @@ export default function FiltersBar({
                             value=""
                             onChange={(e) => e.target.value && addItem('brands', e.target.value)}
                             className="control"
-                            style={{ minWidth: '150px' }}
+                            style={{ width: '100%', minWidth: '130px' }}
                         >
                             <option value="">Selecione...</option>
                             {options.brands.map((brand) => (
@@ -301,7 +302,7 @@ export default function FiltersBar({
                                 </option>
                             ))}
                         </select>
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
                             {localFilters.brands.map((brand) => (
                                 <span
                                     key={brand}
@@ -311,7 +312,7 @@ export default function FiltersBar({
                                         gap: '4px',
                                         background: '#F3E8FF',
                                         color: '#7E22CE',
-                                        fontSize: '0.68rem',
+                                        fontSize: '0.65rem',
                                         fontWeight: 500,
                                         padding: '2px 8px',
                                         borderRadius: '9999px'
@@ -319,7 +320,7 @@ export default function FiltersBar({
                                 >
                                     {brand}
                                     <X
-                                        size={14}
+                                        size={12}
                                         style={{ cursor: 'pointer', opacity: 0.6 }}
                                         onClick={() => removeItem('brands', brand)}
                                         onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
@@ -330,51 +331,20 @@ export default function FiltersBar({
                         </div>
                     </div>
                 )}
+            </div>
 
-                {/* Samsung Toggle */}
-                <div style={{ minWidth: '150px', display: 'flex', alignItems: 'center', gap: '12px', paddingTop: '18px' }}>
-                    <label style={{
-                        fontSize: '0.68rem',
-                        fontWeight: 600,
-                        color: '#6B7280',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        whiteSpace: 'nowrap'
-                    }}>
-                        {mode === 'brands' ? 'Apenas SAMSUNG' : 'Presença SAMSUNG'}
-                    </label>
-                    <button
-                        onClick={() => handleChange('targetBrandOnly', !localFilters.targetBrandOnly)}
-                        style={{
-                            position: 'relative',
-                            width: '38px',
-                            height: '22px',
-                            background: localFilters.targetBrandOnly ? '#2563EB' : '#D1D5DB',
-                            border: 'none',
-                            borderRadius: '11px',
-                            cursor: 'pointer',
-                            transition: 'background 0.3s ease',
-                            flexShrink: 0
-                        }}
-                    >
-                        <span
-                            style={{
-                                position: 'absolute',
-                                top: '2px',
-                                left: localFilters.targetBrandOnly ? '18px' : '2px',
-                                width: '18px',
-                                height: '18px',
-                                background: 'white',
-                                borderRadius: '50%',
-                                transition: 'transform 0.3s ease',
-                                boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
-                            }}
-                        />
-                    </button>
-                </div>
-
+            {/* Linha 2: Filtros numéricos - Preço, Share, Registros, Ordenação */}
+            <div style={{
+                display: 'flex',
+                flexWrap: 'wrap',
+                gap: '16px 20px',
+                alignItems: 'flex-end',
+                marginBottom: '12px',
+                borderTop: '1px solid var(--border)',
+                paddingTop: '12px'
+            }}>
                 {/* Price Range */}
-                <div style={{ minWidth: '180px' }}>
+                <div style={{ minWidth: '160px', flex: '0 1 auto' }}>
                     <label style={{
                         display: 'block',
                         fontSize: '0.68rem',
@@ -393,7 +363,7 @@ export default function FiltersBar({
                             value={localFilters.minPrice ?? ''}
                             onChange={(e) => handleChange('minPrice', e.target.value ? Number(e.target.value) : null)}
                             className="control"
-                            style={{ width: '80px', minWidth: '70px' }}
+                            style={{ width: '70px', minWidth: '60px' }}
                         />
                         <span style={{ fontSize: '0.7rem', color: '#9CA3AF' }}>-</span>
                         <input
@@ -402,13 +372,13 @@ export default function FiltersBar({
                             value={localFilters.maxPrice ?? ''}
                             onChange={(e) => handleChange('maxPrice', e.target.value ? Number(e.target.value) : null)}
                             className="control"
-                            style={{ width: '80px', minWidth: '70px' }}
+                            style={{ width: '70px', minWidth: '60px' }}
                         />
                     </div>
                 </div>
 
                 {/* Market Share */}
-                <div style={{ minWidth: '140px' }}>
+                <div style={{ minWidth: '120px', flex: '0 1 auto' }}>
                     <label style={{
                         display: 'block',
                         fontSize: '0.68rem',
@@ -428,12 +398,12 @@ export default function FiltersBar({
                         value={localFilters.minMarketShare ?? ''}
                         onChange={(e) => handleChange('minMarketShare', e.target.value ? Number(e.target.value) : null)}
                         className="control"
-                        style={{ width: '100px' }}
+                        style={{ width: '90px' }}
                     />
                 </div>
 
                 {/* Min Records */}
-                <div style={{ minWidth: '140px' }}>
+                <div style={{ minWidth: '120px', flex: '0 1 auto' }}>
                     <label style={{
                         display: 'block',
                         fontSize: '0.68rem',
@@ -452,13 +422,13 @@ export default function FiltersBar({
                         value={localFilters.minRecords ?? ''}
                         onChange={(e) => handleChange('minRecords', e.target.value ? Number(e.target.value) : null)}
                         className="control"
-                        style={{ width: '100px' }}
+                        style={{ width: '90px' }}
                     />
                 </div>
 
                 {/* Min Brands (apenas para marketplaces) */}
                 {mode === 'marketplaces' && (
-                    <div style={{ minWidth: '140px' }}>
+                    <div style={{ minWidth: '120px', flex: '0 1 auto' }}>
                         <label style={{
                             display: 'block',
                             fontSize: '0.68rem',
@@ -477,13 +447,13 @@ export default function FiltersBar({
                             value={localFilters.minBrands ?? ''}
                             onChange={(e) => handleChange('minBrands', e.target.value ? Number(e.target.value) : null)}
                             className="control"
-                            style={{ width: '100px' }}
+                            style={{ width: '90px' }}
                         />
                     </div>
                 )}
 
                 {/* Ordenação */}
-                <div style={{ minWidth: '180px' }}>
+                <div style={{ minWidth: '160px', flex: '1 1 160px' }}>
                     <label style={{
                         display: 'block',
                         fontSize: '0.68rem',
@@ -510,8 +480,8 @@ export default function FiltersBar({
                             onClick={() => handleChange('orderDirection', localFilters.orderDirection === 'asc' ? 'desc' : 'asc')}
                             className="control"
                             style={{
-                                width: '38px',
-                                minWidth: '38px',
+                                width: '36px',
+                                minWidth: '36px',
                                 padding: '6px 8px',
                                 textAlign: 'center',
                                 cursor: 'pointer'
@@ -521,6 +491,64 @@ export default function FiltersBar({
                         </button>
                     </div>
                 </div>
+            </div>
+
+            {/* Linha 3: Samsung Toggle - Abaixo de tudo */}
+            <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                borderTop: '1px solid var(--border)',
+                paddingTop: '10px',
+                marginTop: '2px'
+            }}>
+                <label style={{
+                    fontSize: '0.68rem',
+                    fontWeight: 600,
+                    color: '#6B7280',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    whiteSpace: 'nowrap'
+                }}>
+                    {mode === 'brands' ? 'Apenas SAMSUNG' : 'Presença SAMSUNG'}
+                </label>
+                <button
+                    onClick={() => handleChange('targetBrandOnly', !localFilters.targetBrandOnly)}
+                    style={{
+                        position: 'relative',
+                        width: '38px',
+                        height: '22px',
+                        background: localFilters.targetBrandOnly ? '#2563EB' : '#D1D5DB',
+                        border: 'none',
+                        borderRadius: '11px',
+                        cursor: 'pointer',
+                        transition: 'background 0.3s ease',
+                        flexShrink: 0
+                    }}
+                >
+                    <span
+                        style={{
+                            position: 'absolute',
+                            top: '2px',
+                            left: localFilters.targetBrandOnly ? '18px' : '2px',
+                            width: '18px',
+                            height: '18px',
+                            background: 'white',
+                            borderRadius: '50%',
+                            transition: 'transform 0.3s ease',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                        }}
+                    />
+                </button>
+                {localFilters.targetBrandOnly && (
+                    <span style={{
+                        fontSize: '0.7rem',
+                        color: '#2563EB',
+                        fontWeight: 500
+                    }}>
+                        ✓ Filtro ativo
+                    </span>
+                )}
             </div>
         </div>
     );

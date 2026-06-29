@@ -11,8 +11,7 @@ import KPIWidget from '../components/ui/KPIWidget';
 import LoadingState from '../components/shared/LoadingState';
 import ErrorState from '../components/shared/ErrorState';
 import FiltersBar from '../components/ui/FiltersBar';
-import { useFilters } from '../hooks/useFilters';
-import { FiltersState } from '../types/filters';
+import { useFilters } from '../contexts/FilterContext';
 
 interface BrandData {
   [key: string]: {
@@ -62,7 +61,6 @@ export default function BrandsPage() {
     categories: [],
   });
 
-  // Carregar opções de filtro
   useEffect(() => {
     const fetchOptions = async () => {
       try {
@@ -86,7 +84,6 @@ export default function BrandsPage() {
     fetchOptions();
   }, []);
 
-  // Carregar dados
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -110,7 +107,6 @@ export default function BrandsPage() {
     fetchData();
   }, []);
 
-  // Filtrar dados
   const filteredBrands = useMemo((): BrandItem[] => {
     if (!brands || !summary) return [];
 
@@ -122,7 +118,6 @@ export default function BrandsPage() {
 
     let filtered = brandsArray;
 
-    // Filtro de marketplaces
     if (filters.marketplaces.length > 0) {
       filtered = filtered.filter((brand) =>
         brand.marketplaces.some((mp: string) =>
@@ -131,17 +126,12 @@ export default function BrandsPage() {
       );
     }
 
-    // Filtro de categorias (se houver dados de categoria)
-    // Nota: Este filtro requer dados adicionais, pode ser implementado se disponível
-
-    // Filtro Samsung apenas
     if (filters.targetBrandOnly) {
       filtered = filtered.filter((brand) =>
         brand.name.toUpperCase() === TARGET_BRAND.toUpperCase()
       );
     }
 
-    // Filtro de preço
     if (filters.minPrice !== null) {
       filtered = filtered.filter((brand) => brand.avg_spot_price >= filters.minPrice!);
     }
@@ -149,17 +139,14 @@ export default function BrandsPage() {
       filtered = filtered.filter((brand) => brand.avg_spot_price <= filters.maxPrice!);
     }
 
-    // Filtro de market share
     if (filters.minMarketShare !== null) {
       filtered = filtered.filter((brand) => brand.market_share >= filters.minMarketShare!);
     }
 
-    // Filtro de registros
     if (filters.minRecords !== null) {
       filtered = filtered.filter((brand) => brand.count >= filters.minRecords!);
     }
 
-    // Ordenação
     const orderByMap: Record<string, keyof BrandItem> = {
       marketShare: 'market_share',
       avgPrice: 'avg_spot_price',
@@ -184,10 +171,6 @@ export default function BrandsPage() {
 
     return filtered;
   }, [brands, summary, filters]);
-
-  const handleFilterChange = (newFilters: Partial<FiltersState>) => {
-    setFilters(newFilters);
-  };
 
   if (loading) return <LoadingState message="Carregando análise de marcas..." />;
   if (error) return <ErrorState message={error} />;
@@ -298,7 +281,7 @@ export default function BrandsPage() {
 
       <FiltersBar
         filters={filters}
-        onFilterChange={handleFilterChange}
+        onFilterChange={setFilters}
         onClearFilters={clearFilters}
         options={{
           marketplaces: filterOptions.marketplaces,

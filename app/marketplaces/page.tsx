@@ -11,8 +11,7 @@ import KPIWidget from '../components/ui/KPIWidget';
 import LoadingState from '../components/shared/LoadingState';
 import ErrorState from '../components/shared/ErrorState';
 import FiltersBar from '../components/ui/FiltersBar';
-import { useFilters } from '../hooks/useFilters';
-import { FiltersState } from '../types/filters';
+import { useFilters } from '../contexts/FilterContext';
 
 interface MarketplaceData {
   [key: string]: {
@@ -34,6 +33,17 @@ interface FilterOption {
   label: string;
 }
 
+interface MarketplaceItem {
+  name: string;
+  count: number;
+  avg_spot_price: number;
+  min_spot_price: number;
+  max_spot_price: number;
+  brand_count: number;
+  brands: string[];
+  market_share: number;
+}
+
 export default function MarketplacesPage() {
   const { filters, setFilters, clearFilters } = useFilters();
 
@@ -49,7 +59,6 @@ export default function MarketplacesPage() {
     brands: [],
   });
 
-  // Carregar opções de filtro
   useEffect(() => {
     const fetchOptions = async () => {
       try {
@@ -62,8 +71,8 @@ export default function MarketplacesPage() {
         const brandsData = await brandsRes.json();
 
         setFilterOptions({
-          marketplaces: Object.keys(marketplacesData || {}).map(k => ({ value: k, label: k })),
-          brands: Object.keys(brandsData || {}).map(k => ({ value: k, label: k })),
+          marketplaces: Object.keys(marketplacesData || {}).map((k: string) => ({ value: k, label: k })),
+          brands: Object.keys(brandsData || {}).map((k: string) => ({ value: k, label: k })),
         });
       } catch (error) {
         console.error('Error fetching filter options:', error);
@@ -73,7 +82,6 @@ export default function MarketplacesPage() {
     fetchOptions();
   }, []);
 
-  // Carregar dados
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
@@ -97,11 +105,10 @@ export default function MarketplacesPage() {
     fetchData();
   }, []);
 
-  // Filtrar dados
-  const filteredMarketplaces = useMemo(() => {
+  const filteredMarketplaces = useMemo((): MarketplaceItem[] => {
     if (!marketplaces || !summary) return [];
 
-    const marketplacesArray = Object.entries(marketplaces).map(([name, data]) => ({
+    const marketplacesArray: MarketplaceItem[] = Object.entries(marketplaces).map(([name, data]) => ({
       name,
       ...data,
       market_share: ((data.count / summary.total_records) * 100),
@@ -109,52 +116,44 @@ export default function MarketplacesPage() {
 
     let filtered = marketplacesArray;
 
-    // Filtro de marketplaces
     if (filters.marketplaces.length > 0) {
-      filtered = filtered.filter(mp =>
-        filters.marketplaces.some(f => f.toUpperCase() === mp.name.toUpperCase())
+      filtered = filtered.filter((mp) =>
+        filters.marketplaces.some((f: string) => f.toUpperCase() === mp.name.toUpperCase())
       );
     }
 
-    // Filtro de marcas
     if (filters.brands && filters.brands.length > 0) {
-      filtered = filtered.filter(mp =>
-        mp.brands.some(b => filters.brands!.some(f => f.toUpperCase() === b.toUpperCase()))
+      filtered = filtered.filter((mp) =>
+        mp.brands.some((b: string) => filters.brands!.some((f: string) => f.toUpperCase() === b.toUpperCase()))
       );
     }
 
-    // Filtro Samsung apenas
     if (filters.targetBrandOnly) {
-      filtered = filtered.filter(mp =>
-        mp.brands.some(b => b.toUpperCase() === TARGET_BRAND.toUpperCase())
+      filtered = filtered.filter((mp) =>
+        mp.brands.some((b: string) => b.toUpperCase() === TARGET_BRAND.toUpperCase())
       );
     }
 
-    // Filtro de preço
     if (filters.minPrice !== null) {
-      filtered = filtered.filter(mp => mp.avg_spot_price >= filters.minPrice!);
+      filtered = filtered.filter((mp) => mp.avg_spot_price >= filters.minPrice!);
     }
     if (filters.maxPrice !== null) {
-      filtered = filtered.filter(mp => mp.avg_spot_price <= filters.maxPrice!);
+      filtered = filtered.filter((mp) => mp.avg_spot_price <= filters.maxPrice!);
     }
 
-    // Filtro de market share
     if (filters.minMarketShare !== null) {
-      filtered = filtered.filter(mp => mp.market_share >= filters.minMarketShare!);
+      filtered = filtered.filter((mp) => mp.market_share >= filters.minMarketShare!);
     }
 
-    // Filtro de registros
     if (filters.minRecords !== null) {
-      filtered = filtered.filter(mp => mp.count >= filters.minRecords!);
+      filtered = filtered.filter((mp) => mp.count >= filters.minRecords!);
     }
 
-    // Filtro de marcas mínimas
     if (filters.minBrands !== null) {
-      filtered = filtered.filter(mp => mp.brand_count >= filters.minBrands!);
+      filtered = filtered.filter((mp) => mp.brand_count >= filters.minBrands!);
     }
 
-    // Ordenação
-    const orderByMap: Record<string, keyof typeof filtered[0]> = {
+    const orderByMap: Record<string, keyof MarketplaceItem> = {
       marketShare: 'market_share',
       avgPrice: 'avg_spot_price',
       count: 'count',
@@ -178,10 +177,6 @@ export default function MarketplacesPage() {
     return filtered;
   }, [marketplaces, summary, filters]);
 
-  const handleFilterChange = (newFilters: Partial<FiltersState>) => {
-    setFilters(newFilters);
-  };
-
   if (loading) return <LoadingState message="Carregando análise de marketplaces..." />;
   if (error) return <ErrorState message={error} />;
 
@@ -197,7 +192,7 @@ export default function MarketplacesPage() {
       header: 'Marketplace',
       width: '28%',
       minWidth: '220px',
-      render: (value: string, row: any) => (
+      render: (value: string, row: MarketplaceItem) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
           <span style={{ fontWeight: 600, color: '#111827' }}>
             {value}
@@ -268,8 +263,8 @@ export default function MarketplacesPage() {
   ];
 
   const totalMarketplaces = filteredMarketplaces.length;
-  const targetCoverage = filteredMarketplaces.filter(mp => mp.brands.includes(TARGET_BRAND)).length;
-  const benchmarkCoverage = filteredMarketplaces.filter(mp => mp.brands.includes(BENCHMARK_BRAND)).length;
+  const targetCoverage = filteredMarketplaces.filter((mp) => mp.brands.includes(TARGET_BRAND)).length;
+  const benchmarkCoverage = filteredMarketplaces.filter((mp) => mp.brands.includes(BENCHMARK_BRAND)).length;
   const avgGlobalPrice = filteredMarketplaces.length > 0
     ? filteredMarketplaces.reduce((acc, mp) => acc + mp.avg_spot_price, 0) / filteredMarketplaces.length
     : 0;
@@ -284,7 +279,7 @@ export default function MarketplacesPage() {
 
       <FiltersBar
         filters={filters}
-        onFilterChange={handleFilterChange}
+        onFilterChange={setFilters}
         onClearFilters={clearFilters}
         options={{
           marketplaces: filterOptions.marketplaces,
@@ -358,7 +353,7 @@ export default function MarketplacesPage() {
                   <strong style={{ color: '#059669' }}>Preço Médio Global:</strong> R$ {avgGlobalPrice.toFixed(2)}
                 </p>
                 <p style={{ margin: 0 }}>
-                  <strong style={{ color: '#059669' }}>Marketplaces com {TARGET_BRAND}:</strong> {filteredMarketplaces.filter(mp => mp.brands.includes(TARGET_BRAND)).map(mp => mp.name).join(', ') || 'Nenhum'}
+                  <strong style={{ color: '#059669' }}>Marketplaces com {TARGET_BRAND}:</strong> {filteredMarketplaces.filter((mp) => mp.brands.includes(TARGET_BRAND)).map((mp) => mp.name).join(', ') || 'Nenhum'}
                 </p>
               </>
             )}

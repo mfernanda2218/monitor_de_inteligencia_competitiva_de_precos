@@ -1,7 +1,7 @@
 // contexts/FilterContext.tsx
 'use client';
 
-import { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { createContext, useContext, useState, ReactNode } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { FiltersState, defaultFilters } from '../types/filters';
 
@@ -9,6 +9,7 @@ interface FilterContextType {
     filters: FiltersState;
     setFilters: (newFilters: Partial<FiltersState>) => void;
     clearFilters: () => void;
+    hasActiveFilters: boolean;
 }
 
 const FilterContext = createContext<FilterContextType | undefined>(undefined);
@@ -39,26 +40,7 @@ export function FilterProvider({ children }: { children: ReactNode }) {
     const setFilters = (newFilters: Partial<FiltersState>) => {
         const updated = { ...filters, ...newFilters };
         setFiltersState(updated);
-
-        const params = new URLSearchParams();
-        updated.marketplaces.forEach(m => params.append('marketplace', m));
-        updated.brands.forEach(b => params.append('brand', b));
-        updated.categories.forEach(c => params.append('category', c));
-        updated.alertSeverity.forEach(s => params.append('severity', s));
-
-        if (updated.minPrice !== null) params.set('minPrice', String(updated.minPrice));
-        if (updated.maxPrice !== null) params.set('maxPrice', String(updated.maxPrice));
-        if (updated.minMarketShare !== null) params.set('minMarketShare', String(updated.minMarketShare));
-        if (updated.minRecords !== null) params.set('minRecords', String(updated.minRecords));
-        if (updated.minBrands !== null) params.set('minBrands', String(updated.minBrands));
-        if (updated.period.start) params.set('periodStart', updated.period.start);
-        if (updated.period.end) params.set('periodEnd', updated.period.end);
-        if (updated.orderBy) params.set('orderBy', updated.orderBy);
-        if (updated.orderDirection) params.set('orderDirection', updated.orderDirection);
-        if (updated.targetBrandOnly) params.set('targetBrandOnly', 'true');
-
-        const queryString = params.toString();
-        router.push(queryString ? `?${queryString}` : '?');
+        syncUrl(updated);
     };
 
     const clearFilters = () => {
@@ -68,11 +50,47 @@ export function FilterProvider({ children }: { children: ReactNode }) {
             orderDirection: filters.orderDirection,
         };
         setFiltersState(reset);
-        router.push('?');
+        syncUrl(reset);
     };
 
+    const syncUrl = (filtersToSync: FiltersState) => {
+        const params = new URLSearchParams();
+
+        filtersToSync.marketplaces.forEach(m => params.append('marketplace', m));
+        filtersToSync.brands.forEach(b => params.append('brand', b));
+        filtersToSync.categories.forEach(c => params.append('category', c));
+        filtersToSync.alertSeverity.forEach(s => params.append('severity', s));
+
+        if (filtersToSync.minPrice !== null) params.set('minPrice', String(filtersToSync.minPrice));
+        if (filtersToSync.maxPrice !== null) params.set('maxPrice', String(filtersToSync.maxPrice));
+        if (filtersToSync.minMarketShare !== null) params.set('minMarketShare', String(filtersToSync.minMarketShare));
+        if (filtersToSync.minRecords !== null) params.set('minRecords', String(filtersToSync.minRecords));
+        if (filtersToSync.minBrands !== null) params.set('minBrands', String(filtersToSync.minBrands));
+        if (filtersToSync.period.start) params.set('periodStart', filtersToSync.period.start);
+        if (filtersToSync.period.end) params.set('periodEnd', filtersToSync.period.end);
+        if (filtersToSync.orderBy) params.set('orderBy', filtersToSync.orderBy);
+        if (filtersToSync.orderDirection) params.set('orderDirection', filtersToSync.orderDirection);
+        if (filtersToSync.targetBrandOnly) params.set('targetBrandOnly', 'true');
+
+        const queryString = params.toString();
+        router.push(queryString ? `?${queryString}` : '?', { scroll: false });
+    };
+
+    const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
+        if (key === 'period') {
+            return !!(value?.start || value?.end);
+        }
+        if (Array.isArray(value)) {
+            return value.length > 0;
+        }
+        if (key === 'orderBy' || key === 'orderDirection') {
+            return false;
+        }
+        return value !== null && value !== '' && value !== false;
+    });
+
     return (
-        <FilterContext.Provider value={{ filters, setFilters, clearFilters }}>
+        <FilterContext.Provider value={{ filters, setFilters, clearFilters, hasActiveFilters }}>
             {children}
         </FilterContext.Provider>
     );

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import Pagination from './Pagination';
 
 interface Column {
   key: string;
@@ -17,9 +18,9 @@ interface AnalyticsTableProps {
   pageSize?: number;
 }
 
-export default function AnalyticsTable({ 
-  columns, 
-  data, 
+export default function AnalyticsTable({
+  columns,
+  data,
   onRowClick,
   className = '',
   pageSize = 7
@@ -40,17 +41,17 @@ export default function AnalyticsTable({
 
   const sortedData = [...data].sort((a, b) => {
     if (!sortColumn) return 0;
-    
+
     const aValue = a[sortColumn];
     const bValue = b[sortColumn];
-    
+
     if (typeof aValue === 'number' && typeof bValue === 'number') {
       return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
     }
-    
+
     const aStr = String(aValue).toLowerCase();
     const bStr = String(bValue).toLowerCase();
-    
+
     if (sortDirection === 'asc') {
       return aStr.localeCompare(bStr);
     }
@@ -157,42 +158,16 @@ export default function AnalyticsTable({
           </tbody>
         </table>
       </div>
-      {data.length === 0 && (
-        <div style={{
-          padding: '28px 16px',
-          textAlign: 'center',
-          color: '#6B7280',
-          fontSize: '0.78rem'
-        }}>
-          Nenhum dado disponível
-        </div>
-      )}
       {data.length > pageSize && (
         <div className="table-pagination">
           <span className="table-pagination-summary">
             {visibleStart}-{visibleEnd} de {sortedData.length}
           </span>
-          <div className="table-pagination-actions">
-            <button
-              type="button"
-              className="pagination-button"
-              onClick={() => setCurrentPage(page => Math.max(1, page - 1))}
-              disabled={safeCurrentPage === 1}
-            >
-              Anterior
-            </button>
-            <span className="table-page-count">
-              {safeCurrentPage}/{totalPages}
-            </span>
-            <button
-              type="button"
-              className="pagination-button"
-              onClick={() => setCurrentPage(page => Math.min(totalPages, page + 1))}
-              disabled={safeCurrentPage === totalPages}
-            >
-              Proxima
-            </button>
-          </div>
+          <Pagination
+            currentPage={safeCurrentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </div>
       )}
     </div>

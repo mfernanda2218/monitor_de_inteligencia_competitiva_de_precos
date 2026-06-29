@@ -1,6 +1,8 @@
+// app/layout.tsx
 import type { Metadata } from 'next';
 import './globals.css';
 import Sidebar from './components/ui/Sidebar';
+import { FilterProvider } from './contexts/FilterContext';
 
 export const metadata: Metadata = {
   title: 'Price Intelligence Monitor',
@@ -18,7 +20,11 @@ export default function RootLayout({
         <div className="dashboard-root">
           <Sidebar />
           <main className="main-content">
-            {children}
+            <div className="content-area">
+              <FilterProvider>
+                {children}
+              </FilterProvider>
+            </div>
           </main>
         </div>
       </body>

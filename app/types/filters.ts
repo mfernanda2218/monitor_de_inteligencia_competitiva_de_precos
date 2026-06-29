@@ -15,11 +15,11 @@ export interface FiltersState {
     orderDirection: 'asc' | 'desc';
 
     // Filtros específicos de marcas
-    brands?: string[];
-    targetBrandOnly?: boolean; // Samsung toggle
+    brands: string[];
+    targetBrandOnly: boolean;
 
     // Filtros específicos de marketplaces
-    minBrands?: number | null;
+    minBrands: number | null;
 }
 
 export const defaultFilters: FiltersState = {

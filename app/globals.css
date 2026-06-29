@@ -260,7 +260,6 @@ textarea {
   box-shadow: var(--shadow-sm);
   transition: box-shadow 0.2s ease, border-color 0.2s ease;
   height: 100%;
-  /* Garante altura consistente */
   display: flex;
   flex-direction: column;
 }
@@ -903,6 +902,10 @@ textarea {
 
 .filter-section {
   margin-bottom: var(--spacing-md);
+}
+
+.filters-bar+.grid {
+  margin-top: 4px;
 }
 
 /* Ajuste no globals.css */

@@ -2,8 +2,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, ChevronDown, ChevronUp, Filter } from 'lucide-react';
-import { FiltersState } from '@/app/types/filters';
+import { X, ChevronDown, ChevronUp, SlidersHorizontal } from 'lucide-react';
+import { FiltersState } from '../../types/filters';
 
 interface FilterOption {
     value: string;
@@ -45,9 +45,8 @@ export default function FiltersBar({
     isLoading = false,
 }: FiltersBarProps) {
     const [isExpanded, setIsExpanded] = useState(false);
-    const [localFilters, setLocalFilters] = useState(filters);
+    const [localFilters, setLocalFilters] = useState<FiltersState>(filters);
 
-    // Atualizar filtros locais quando os filtros externos mudarem
     useEffect(() => {
         setLocalFilters(filters);
     }, [filters]);
@@ -67,20 +66,37 @@ export default function FiltersBar({
         setIsExpanded(false);
     };
 
-    const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
+    // Função auxiliar para verificar se um filtro está ativo
+    const isFilterActive = (key: keyof FiltersState, value: any): boolean => {
         if (key === 'period') {
-            return value?.start || value?.end;
+            return !!(value?.start || value?.end);
         }
-        if (Array.isArray(value)) return value.length > 0;
+        if (Array.isArray(value)) {
+            return value.length > 0;
+        }
+        if (key === 'orderBy' || key === 'orderDirection') {
+            return false;
+        }
         return value !== null && value !== '' && value !== false;
+    };
+
+    const hasActiveFilters = Object.entries(filters).some(([key, value]) => {
+        return isFilterActive(key as keyof FiltersState, value);
     });
 
     const activeCount = Object.entries(filters).reduce((count, [key, value]) => {
         if (key === 'period') {
-            return count + (value?.start ? 1 : 0) + (value?.end ? 1 : 0);
+            // Type guard para period
+            const period = value as { start: string | null; end: string | null } | null;
+            return count + (period?.start ? 1 : 0) + (period?.end ? 1 : 0);
         }
-        if (Array.isArray(value)) return count + value.length;
-        if (value !== null && value !== '' && value !== false && key !== 'orderBy' && key !== 'orderDirection') {
+        if (Array.isArray(value)) {
+            return count + value.length;
+        }
+        if (key === 'orderBy' || key === 'orderDirection') {
+            return count;
+        }
+        if (value !== null && value !== '' && value !== false) {
             return count + 1;
         }
         return count;
@@ -89,15 +105,17 @@ export default function FiltersBar({
     const handleMultiSelectChange = (key: 'marketplaces' | 'categories' | 'brands', value: string) => {
         const current = localFilters[key] || [];
         const updated = current.includes(value)
-            ? current.filter(v => v !== value)
+            ? current.filter((v: string) => v !== value)
             : [...current, value];
         handleChange(key, updated);
     };
 
     const removeFilter = (key: keyof FiltersState, value?: string) => {
         if (Array.isArray(localFilters[key]) && value) {
-            const updated = (localFilters[key] as string[]).filter(v => v !== value);
+            const updated = (localFilters[key] as string[]).filter((v: string) => v !== value);
             handleChange(key, updated);
+        } else if (key === 'period') {
+            handleChange(key, { start: null, end: null });
         } else {
             handleChange(key, null);
         }
@@ -109,7 +127,7 @@ export default function FiltersBar({
 
         // Marketplaces
         if (filters.marketplaces.length > 0) {
-            filters.marketplaces.forEach(mp => {
+            filters.marketplaces.forEach((mp: string) => {
                 tags.push(
                     <span key={`mp-${mp}`} className="filter-tag filter-tag-blue">
                         {mp}
@@ -121,7 +139,7 @@ export default function FiltersBar({
 
         // Categorias
         if (filters.categories.length > 0) {
-            filters.categories.forEach(cat => {
+            filters.categories.forEach((cat: string) => {
                 tags.push(
                     <span key={`cat-${cat}`} className="filter-tag filter-tag-green">
                         {cat}
@@ -133,7 +151,7 @@ export default function FiltersBar({
 
         // Marcas
         if (filters.brands && filters.brands.length > 0) {
-            filters.brands.forEach(brand => {
+            filters.brands.forEach((brand: string) => {
                 tags.push(
                     <span key={`brand-${brand}`} className="filter-tag filter-tag-purple">
                         {brand}
@@ -155,7 +173,9 @@ export default function FiltersBar({
 
         // Price Range
         if (filters.minPrice !== null || filters.maxPrice !== null) {
-            const label = `Preço: ${filters.minPrice !== null ? `R$ ${filters.minPrice}` : '0'} - ${filters.maxPrice !== null ? `R$ ${filters.maxPrice}` : '∞'}`;
+            const minStr = filters.minPrice !== null ? `R$ ${filters.minPrice}` : '0';
+            const maxStr = filters.maxPrice !== null ? `R$ ${filters.maxPrice}` : '∞';
+            const label = `Preço: ${minStr} - ${maxStr}`;
             tags.push(
                 <span key="price-range" className="filter-tag filter-tag-orange">
                     {label}
@@ -203,7 +223,7 @@ export default function FiltersBar({
             <div className="filters-header">
                 <div className="filters-header-left">
                     <div className="filters-title" onClick={() => setIsExpanded(!isExpanded)}>
-                        <Filter size={16} />
+                        <SlidersHorizontal size={16} />
                         <span>Filtros</span>
                         {activeCount > 0 && (
                             <span className="filters-badge">{activeCount}</span>
@@ -212,11 +232,6 @@ export default function FiltersBar({
                             {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                         </button>
                     </div>
-                    {!isExpanded && activeCount > 0 && (
-                        <div className="filters-tags">
-                            {renderActiveTags()}
-                        </div>
-                    )}
                 </div>
                 <div className="filters-header-right">
                     {!isLoading && totalResults !== undefined && (
@@ -232,6 +247,13 @@ export default function FiltersBar({
                 </div>
             </div>
 
+            {/* Tags de filtros ativos (sempre visíveis) */}
+            {!isExpanded && activeCount > 0 && (
+                <div className="filters-tags-container">
+                    {renderActiveTags()}
+                </div>
+            )}
+
             {/* Expanded Filters */}
             {isExpanded && (
                 <div className="filters-body">
@@ -241,7 +263,7 @@ export default function FiltersBar({
                             <div className="filter-group">
                                 <label>Marketplaces</label>
                                 <div className="filter-chips">
-                                    {options.marketplaces.map(mp => (
+                                    {options.marketplaces.slice(0, 10).map((mp: FilterOption) => (
                                         <button
                                             key={mp.value}
                                             className={`filter-chip ${localFilters.marketplaces.includes(mp.value) ? 'active' : ''}`}
@@ -250,6 +272,9 @@ export default function FiltersBar({
                                             {mp.label}
                                         </button>
                                     ))}
+                                    {options.marketplaces.length > 10 && (
+                                        <span className="filter-chip-more">+{options.marketplaces.length - 10}</span>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -259,7 +284,7 @@ export default function FiltersBar({
                             <div className="filter-group">
                                 <label>Categorias</label>
                                 <div className="filter-chips">
-                                    {options.categories.map(cat => (
+                                    {options.categories.slice(0, 8).map((cat: FilterOption) => (
                                         <button
                                             key={cat.value}
                                             className={`filter-chip ${localFilters.categories.includes(cat.value) ? 'active' : ''}`}
@@ -268,6 +293,9 @@ export default function FiltersBar({
                                             {cat.label}
                                         </button>
                                     ))}
+                                    {options.categories.length > 8 && (
+                                        <span className="filter-chip-more">+{options.categories.length - 8}</span>
+                                    )}
                                 </div>
                             </div>
                         )}
@@ -277,7 +305,7 @@ export default function FiltersBar({
                             <div className="filter-group">
                                 <label>Marcas</label>
                                 <div className="filter-chips">
-                                    {options.brands.map(brand => (
+                                    {options.brands.slice(0, 8).map((brand: FilterOption) => (
                                         <button
                                             key={brand.value}
                                             className={`filter-chip ${(localFilters.brands || []).includes(brand.value) ? 'active' : ''}`}
@@ -286,118 +314,126 @@ export default function FiltersBar({
                                             {brand.label}
                                         </button>
                                     ))}
+                                    {options.brands.length > 8 && (
+                                        <span className="filter-chip-more">+{options.brands.length - 8}</span>
+                                    )}
                                 </div>
                             </div>
                         )}
 
-                        {/* Samsung Toggle */}
-                        {mode === 'brands' && (
-                            <div className="filter-group filter-group-toggle">
-                                <label>Apenas SAMSUNG</label>
-                                <button
-                                    className={`filter-toggle ${localFilters.targetBrandOnly ? 'active' : ''}`}
-                                    onClick={() => handleChange('targetBrandOnly', !localFilters.targetBrandOnly)}
-                                >
-                                    <span className="toggle-slider" />
-                                </button>
-                            </div>
-                        )}
+                        {/* Linha 2: Toggles e filtros numéricos */}
+                        <div className="filter-row">
+                            {/* Samsung Toggle */}
+                            {mode === 'brands' && (
+                                <div className="filter-group filter-group-toggle">
+                                    <label>Apenas SAMSUNG</label>
+                                    <button
+                                        className={`filter-toggle ${localFilters.targetBrandOnly ? 'active' : ''}`}
+                                        onClick={() => handleChange('targetBrandOnly', !localFilters.targetBrandOnly)}
+                                    >
+                                        <span className="toggle-slider" />
+                                    </button>
+                                </div>
+                            )}
 
-                        {mode === 'marketplaces' && (
-                            <div className="filter-group filter-group-toggle">
-                                <label>Presença SAMSUNG</label>
-                                <button
-                                    className={`filter-toggle ${localFilters.targetBrandOnly ? 'active' : ''}`}
-                                    onClick={() => handleChange('targetBrandOnly', !localFilters.targetBrandOnly)}
-                                >
-                                    <span className="toggle-slider" />
-                                </button>
-                            </div>
-                        )}
+                            {mode === 'marketplaces' && (
+                                <div className="filter-group filter-group-toggle">
+                                    <label>Presença SAMSUNG</label>
+                                    <button
+                                        className={`filter-toggle ${localFilters.targetBrandOnly ? 'active' : ''}`}
+                                        onClick={() => handleChange('targetBrandOnly', !localFilters.targetBrandOnly)}
+                                    >
+                                        <span className="toggle-slider" />
+                                    </button>
+                                </div>
+                            )}
 
-                        {/* Price Range */}
-                        <div className="filter-group">
-                            <label>Faixa de Preço</label>
-                            <div className="filter-range">
+                            {/* Price Range */}
+                            <div className="filter-group filter-group-range">
+                                <label>Faixa de Preço</label>
+                                <div className="filter-range">
+                                    <input
+                                        type="number"
+                                        placeholder="Mín"
+                                        value={localFilters.minPrice ?? ''}
+                                        onChange={(e) => handleChange('minPrice', e.target.value ? Number(e.target.value) : null)}
+                                        className="filter-input"
+                                    />
+                                    <span className="filter-range-separator">-</span>
+                                    <input
+                                        type="number"
+                                        placeholder="Máx"
+                                        value={localFilters.maxPrice ?? ''}
+                                        onChange={(e) => handleChange('maxPrice', e.target.value ? Number(e.target.value) : null)}
+                                        className="filter-input"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Market Share */}
+                            <div className="filter-group filter-group-small">
+                                <label>Share mínimo (%)</label>
                                 <input
                                     type="number"
-                                    placeholder="Mín"
-                                    value={localFilters.minPrice ?? ''}
-                                    onChange={(e) => handleChange('minPrice', e.target.value ? Number(e.target.value) : null)}
-                                    className="filter-input"
-                                />
-                                <span className="filter-range-separator">até</span>
-                                <input
-                                    type="number"
-                                    placeholder="Máx"
-                                    value={localFilters.maxPrice ?? ''}
-                                    onChange={(e) => handleChange('maxPrice', e.target.value ? Number(e.target.value) : null)}
-                                    className="filter-input"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Market Share */}
-                        <div className="filter-group">
-                            <label>Market Share mínimo (%)</label>
-                            <input
-                                type="number"
-                                placeholder="Ex: 5"
-                                min={0}
-                                max={100}
-                                value={localFilters.minMarketShare ?? ''}
-                                onChange={(e) => handleChange('minMarketShare', e.target.value ? Number(e.target.value) : null)}
-                                className="filter-input"
-                            />
-                        </div>
-
-                        {/* Min Records */}
-                        <div className="filter-group">
-                            <label>Volume mínimo de registros</label>
-                            <input
-                                type="number"
-                                placeholder="Ex: 1000"
-                                min={0}
-                                value={localFilters.minRecords ?? ''}
-                                onChange={(e) => handleChange('minRecords', e.target.value ? Number(e.target.value) : null)}
-                                className="filter-input"
-                            />
-                        </div>
-
-                        {/* Min Brands (apenas para marketplaces) */}
-                        {mode === 'marketplaces' && (
-                            <div className="filter-group">
-                                <label>Nº mínimo de marcas</label>
-                                <input
-                                    type="number"
-                                    placeholder="Ex: 3"
+                                    placeholder="Ex: 5"
                                     min={0}
-                                    value={localFilters.minBrands ?? ''}
-                                    onChange={(e) => handleChange('minBrands', e.target.value ? Number(e.target.value) : null)}
+                                    max={100}
+                                    value={localFilters.minMarketShare ?? ''}
+                                    onChange={(e) => handleChange('minMarketShare', e.target.value ? Number(e.target.value) : null)}
                                     className="filter-input"
                                 />
                             </div>
-                        )}
 
-                        {/* Ordenação */}
-                        <div className="filter-group">
-                            <label>Ordenar por</label>
-                            <div className="filter-order">
-                                <select
-                                    value={localFilters.orderBy}
-                                    onChange={(e) => handleChange('orderBy', e.target.value)}
-                                    className="filter-select"
-                                >
-                                    {orderOptions.map(opt => (
-                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                    ))}
-                                </select>
-                                <button
-                                    className="filter-order-direction"
-                                    onClick={() => handleChange('orderDirection', localFilters.orderDirection === 'asc' ? 'desc' : 'asc')}
-                                >
-                                    {localFilters.orderDirection === 'asc' ? '↑' : '↓'}
-                                </button>
+                            {/* Min Records */}
+                            <div className="filter-group filter-group-small">
+                                <label>Registros ≥</label>
+                                <input
+                                    type="number"
+                                    placeholder="Ex: 1000"
+                                    min={0}
+                                    value={localFilters.minRecords ?? ''}
+                                    onChange={(e) => handleChange('minRecords', e.target.value ? Number(e.target.value) : null)}
+                                    className="filter-input"
+                                />
+                            </div>
+
+                            {/* Min Brands (apenas para marketplaces) */}
+                            {mode === 'marketplaces' && (
+                                <div className="filter-group filter-group-small">
+                                    <label>Nº marcas ≥</label>
+                                    <input
+                                        type="number"
+                                        placeholder="Ex: 3"
+                                        min={0}
+                                        value={localFilters.minBrands ?? ''}
+                                        onChange={(e) => handleChange('minBrands', e.target.value ? Number(e.target.value) : null)}
+                                        className="filter-input"
+                                    />
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Linha 3: Ordenação */}
+                        <div className="filter-row filter-row-order">
+                            <div className="filter-group filter-group-order">
+                                <label>Ordenar por</label>
+                                <div className="filter-order">
+                                    <select
+                                        value={localFilters.orderBy}
+                                        onChange={(e) => handleChange('orderBy', e.target.value)}
+                                        className="filter-select"
+                                    >
+                                        {orderOptions.map((opt) => (
+                                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                        ))}
+                                    </select>
+                                    <button
+                                        className="filter-order-direction"
+                                        onClick={() => handleChange('orderDirection', localFilters.orderDirection === 'asc' ? 'desc' : 'asc')}
+                                    >
+                                        {localFilters.orderDirection === 'asc' ? '↑' : '↓'}
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -421,13 +457,14 @@ export default function FiltersBar({
           border-radius: var(--radius-lg);
           box-shadow: var(--shadow-sm);
           overflow: hidden;
+          margin-bottom: 12px;
         }
 
         .filters-header {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 12px 16px;
+          padding: 10px 16px;
           gap: 12px;
           flex-wrap: wrap;
         }
@@ -435,7 +472,7 @@ export default function FiltersBar({
         .filters-header-left {
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 8px;
           flex: 1;
           min-width: 0;
         }
@@ -443,22 +480,24 @@ export default function FiltersBar({
         .filters-title {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 6px;
           cursor: pointer;
           user-select: none;
           color: var(--text-primary);
           font-weight: 600;
-          font-size: 0.875rem;
+          font-size: 0.82rem;
           white-space: nowrap;
         }
 
         .filters-badge {
           background: var(--primary);
           color: white;
-          font-size: 0.625rem;
+          font-size: 0.6rem;
           font-weight: 700;
           padding: 1px 7px;
           border-radius: var(--radius-full);
+          min-width: 18px;
+          text-align: center;
         }
 
         .filters-toggle-btn {
@@ -471,18 +510,50 @@ export default function FiltersBar({
           align-items: center;
         }
 
-        .filters-tags {
+        .filters-header-right {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          flex-shrink: 0;
+        }
+
+        .filters-results {
+          font-size: 0.75rem;
+          color: var(--text-secondary);
+          font-weight: 500;
+        }
+
+        .filters-clear-btn {
+          background: none;
+          border: none;
+          color: var(--text-secondary);
+          font-size: 0.72rem;
+          font-weight: 500;
+          cursor: pointer;
+          padding: 4px 10px;
+          border-radius: var(--radius-sm);
+          transition: all 0.2s;
+        }
+
+        .filters-clear-btn:hover {
+          background: #FEE2E2;
+          color: var(--danger);
+        }
+
+        .filters-tags-container {
           display: flex;
           flex-wrap: wrap;
           gap: 4px;
-          overflow: hidden;
+          padding: 0 16px 10px 16px;
+          border-top: 1px solid var(--border);
+          padding-top: 10px;
         }
 
         .filter-tag {
           display: inline-flex;
           align-items: center;
           gap: 4px;
-          font-size: 0.65rem;
+          font-size: 0.62rem;
           font-weight: 500;
           padding: 2px 8px;
           border-radius: var(--radius-full);
@@ -524,45 +595,15 @@ export default function FiltersBar({
           opacity: 1;
         }
 
-        .filters-header-right {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-          flex-shrink: 0;
-        }
-
-        .filters-results {
-          font-size: 0.78rem;
-          color: var(--text-secondary);
-          font-weight: 500;
-        }
-
-        .filters-clear-btn {
-          background: none;
-          border: none;
-          color: var(--text-secondary);
-          font-size: 0.75rem;
-          font-weight: 500;
-          cursor: pointer;
-          padding: 4px 8px;
-          border-radius: var(--radius-sm);
-          transition: all 0.2s;
-        }
-
-        .filters-clear-btn:hover {
-          background: #FEE2E2;
-          color: var(--danger);
-        }
-
         .filters-body {
-          padding: 16px;
+          padding: 12px 16px 16px;
           border-top: 1px solid var(--border);
         }
 
         .filters-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-          gap: 16px;
+          display: flex;
+          flex-direction: column;
+          gap: 12px;
         }
 
         .filter-group {
@@ -572,7 +613,7 @@ export default function FiltersBar({
         }
 
         .filter-group label {
-          font-size: 0.7rem;
+          font-size: 0.68rem;
           font-weight: 600;
           color: var(--text-secondary);
           text-transform: uppercase;
@@ -586,10 +627,10 @@ export default function FiltersBar({
         }
 
         .filter-chip {
-          padding: 4px 10px;
+          padding: 3px 10px;
           border: 1px solid var(--border);
           border-radius: var(--radius-full);
-          font-size: 0.72rem;
+          font-size: 0.7rem;
           font-weight: 500;
           color: var(--text-secondary);
           background: var(--surface);
@@ -608,11 +649,20 @@ export default function FiltersBar({
           border-color: var(--primary);
         }
 
+        .filter-chip-more {
+          padding: 3px 10px;
+          border-radius: var(--radius-full);
+          font-size: 0.7rem;
+          font-weight: 500;
+          color: var(--text-tertiary);
+          background: var(--background);
+        }
+
         .filter-input {
-          padding: 6px 10px;
+          padding: 5px 10px;
           border: 1px solid var(--border);
           border-radius: var(--radius-sm);
-          font-size: 0.78rem;
+          font-size: 0.75rem;
           width: 100%;
           background: var(--surface);
           color: var(--text-primary);
@@ -629,19 +679,14 @@ export default function FiltersBar({
           color: var(--text-tertiary);
         }
 
-        .filter-range {
-          display: flex;
-          align-items: center;
-          gap: 8px;
+        .filter-row {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+          gap: 12px;
         }
 
-        .filter-range .filter-input {
-          width: 80px;
-        }
-
-        .filter-range-separator {
-          font-size: 0.72rem;
-          color: var(--text-tertiary);
+        .filter-row-order {
+          grid-template-columns: 1fr;
         }
 
         .filter-group-toggle {
@@ -656,11 +701,11 @@ export default function FiltersBar({
 
         .filter-toggle {
           position: relative;
-          width: 40px;
-          height: 22px;
+          width: 36px;
+          height: 20px;
           background: #D1D5DB;
           border: none;
-          border-radius: 11px;
+          border-radius: 10px;
           cursor: pointer;
           transition: background 0.3s ease;
           flex-shrink: 0;
@@ -674,8 +719,8 @@ export default function FiltersBar({
           position: absolute;
           top: 2px;
           left: 2px;
-          width: 18px;
-          height: 18px;
+          width: 16px;
+          height: 16px;
           background: white;
           border-radius: 50%;
           transition: transform 0.3s ease;
@@ -683,14 +728,14 @@ export default function FiltersBar({
         }
 
         .filter-toggle.active .toggle-slider {
-          transform: translateX(18px);
+          transform: translateX(16px);
         }
 
         .filter-select {
-          padding: 6px 10px;
+          padding: 5px 10px;
           border: 1px solid var(--border);
           border-radius: var(--radius-sm);
-          font-size: 0.78rem;
+          font-size: 0.75rem;
           background: var(--surface);
           color: var(--text-primary);
           flex: 1;
@@ -708,14 +753,15 @@ export default function FiltersBar({
         }
 
         .filter-order-direction {
-          padding: 6px 10px;
+          padding: 5px 10px;
           border: 1px solid var(--border);
           border-radius: var(--radius-sm);
           background: var(--surface);
           color: var(--text-secondary);
           cursor: pointer;
-          font-size: 0.78rem;
+          font-size: 0.75rem;
           transition: all 0.2s;
+          min-width: 36px;
         }
 
         .filter-order-direction:hover {
@@ -723,22 +769,49 @@ export default function FiltersBar({
           color: var(--primary);
         }
 
+        .filter-range {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .filter-range .filter-input {
+          width: 70px;
+        }
+
+        .filter-range-separator {
+          font-size: 0.7rem;
+          color: var(--text-tertiary);
+        }
+
+        .filter-group-range .filter-range .filter-input {
+          width: 80px;
+        }
+
+        .filter-group-small .filter-input {
+          max-width: 100px;
+        }
+
+        .filter-group-order {
+          max-width: 280px;
+        }
+
         .filters-actions {
           display: flex;
           gap: 8px;
-          margin-top: 16px;
-          padding-top: 16px;
+          margin-top: 12px;
+          padding-top: 12px;
           border-top: 1px solid var(--border);
           justify-content: flex-end;
         }
 
         .filters-apply-btn {
-          padding: 8px 20px;
+          padding: 6px 18px;
           background: var(--primary);
           color: white;
           border: none;
           border-radius: var(--radius-md);
-          font-size: 0.78rem;
+          font-size: 0.75rem;
           font-weight: 600;
           cursor: pointer;
           transition: background 0.2s;
@@ -752,28 +825,27 @@ export default function FiltersBar({
           .filters-header {
             flex-direction: column;
             align-items: stretch;
-            gap: 8px;
-          }
-
-          .filters-header-left {
-            flex-wrap: wrap;
-          }
-
-          .filters-tags {
-            order: 3;
-            width: 100%;
+            gap: 6px;
           }
 
           .filters-header-right {
             justify-content: space-between;
           }
 
-          .filters-grid {
-            grid-template-columns: 1fr;
+          .filter-row {
+            grid-template-columns: 1fr 1fr;
           }
 
-          .filter-range .filter-input {
+          .filter-group-range .filter-range .filter-input {
             width: 100%;
+          }
+
+          .filter-group-small .filter-input {
+            max-width: 100%;
+          }
+
+          .filter-group-order {
+            max-width: 100%;
           }
 
           .filters-actions {
@@ -787,13 +859,21 @@ export default function FiltersBar({
         }
 
         @media (max-width: 480px) {
+          .filter-row {
+            grid-template-columns: 1fr;
+          }
+
           .filter-chips {
             gap: 4px;
           }
 
           .filter-chip {
             font-size: 0.65rem;
-            padding: 3px 8px;
+            padding: 2px 8px;
+          }
+
+          .filter-range .filter-input {
+            width: 100%;
           }
         }
       `}</style>

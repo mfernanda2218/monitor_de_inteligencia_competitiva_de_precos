@@ -291,9 +291,9 @@ export default function Dashboard() {
   return (
     <div className="page-wrapper">
       <PageHeader
-        className="dashboard-header"
         title={`Monitor de Inteligência de Preços ${TARGET_BRAND}`}
         subtitle={`Análise competitiva para ${TARGET_BRAND} vs ${BENCHMARK_BRAND} - Última atualização: ${summary?.processed_at ? new Date(summary.processed_at).toLocaleString('pt-BR') : 'N/A'}`}
+        breadcrumb={undefined}
       />
 
       <FiltersBar

@@ -159,6 +159,42 @@ textarea {
   transition: margin-left 0.25s ease;
 }
 
+/* Adicione ao globals.css */
+
+/* Garantir que todos os cabeçalhos de página fiquem alinhados à esquerda */
+.page-header,
+.dashboard-header,
+.page-wrapper>div:first-child {
+  text-align: left !important;
+}
+
+.page-header h1,
+.dashboard-header h1,
+.page-wrapper>div:first-child h1 {
+  text-align: left !important;
+}
+
+.page-header p,
+.dashboard-header p,
+.page-wrapper>div:first-child p {
+  text-align: left !important;
+}
+
+/* Ajuste específico para o dashboard */
+.dashboard-header {
+  width: 100%;
+}
+
+.dashboard-header>div {
+  justify-content: flex-start !important;
+  width: 100%;
+}
+
+.dashboard-header>div>div {
+  text-align: left !important;
+  width: 100%;
+}
+
 .sidebar.collapsed~.main-content {
   margin-left: 72px;
 }

@@ -1,3 +1,4 @@
+// components/layout/PageHeader.tsx
 import React from 'react';
 import Link from 'next/link';
 
@@ -7,20 +8,24 @@ interface PageHeaderProps {
   breadcrumb?: {
     label: string;
     href: string;
-  };
+  } | null;
   actions?: React.ReactNode;
   className?: string;
 }
 
-export default function PageHeader({ 
-  title, 
-  subtitle, 
-  breadcrumb, 
+export default function PageHeader({
+  title,
+  subtitle,
+  breadcrumb,
   actions,
-  className = '' 
+  className = ''
 }: PageHeaderProps) {
   return (
-    <div className={className} style={{ marginBottom: '16px' }}>
+    <div className={className} style={{
+      marginBottom: '16px',
+      textAlign: 'left',
+      width: '100%'
+    }}>
       {breadcrumb && (
         <Link
           href={breadcrumb.href}
@@ -50,15 +55,21 @@ export default function PageHeader({
         justifyContent: 'space-between',
         alignItems: 'flex-start',
         gap: '12px',
-        flexWrap: 'wrap'
+        flexWrap: 'wrap',
+        width: '100%'
       }}>
-        <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          flex: 1,
+          minWidth: 0,
+          textAlign: 'left'
+        }}>
           <h1 style={{
             fontSize: '1.35rem',
             fontWeight: 700,
             color: '#111827',
             marginBottom: subtitle ? '4px' : 0,
-            lineHeight: 1.2
+            lineHeight: 1.2,
+            textAlign: 'left'
           }}>
             {title}
           </h1>
@@ -67,7 +78,8 @@ export default function PageHeader({
               fontSize: '0.82rem',
               color: '#6B7280',
               margin: 0,
-              lineHeight: 1.5
+              lineHeight: 1.5,
+              textAlign: 'left'
             }}>
               {subtitle}
             </p>

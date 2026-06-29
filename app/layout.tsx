@@ -1,8 +1,10 @@
 // app/layout.tsx
 import type { Metadata } from 'next';
+import { Suspense } from 'react';
 import './globals.css';
 import Sidebar from './components/ui/Sidebar';
 import { FilterProvider } from './contexts/FilterContext';
+import LoadingState from './components/shared/LoadingState';
 
 export const metadata: Metadata = {
   title: 'Price Intelligence Monitor',
@@ -21,9 +23,11 @@ export default function RootLayout({
           <Sidebar />
           <main className="main-content">
             <div className="content-area">
-              <FilterProvider>
-                {children}
-              </FilterProvider>
+              <Suspense fallback={<LoadingState message="Carregando..." />}>
+                <FilterProvider>
+                  {children}
+                </FilterProvider>
+              </Suspense>
             </div>
           </main>
         </div>

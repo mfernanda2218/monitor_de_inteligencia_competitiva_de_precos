@@ -1,3 +1,6 @@
+// app/components/shared/LoadingState.tsx
+'use client';
+
 import React from 'react';
 
 interface LoadingStateProps {
@@ -25,7 +28,7 @@ export default function LoadingState({ message = 'Carregando...' }: LoadingState
           {message}
         </span>
       </div>
-      <style jsx>{`
+      <style>{`
         @keyframes spin {
           to { transform: rotate(360deg); }
         }

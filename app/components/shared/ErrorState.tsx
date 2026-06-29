@@ -1,3 +1,6 @@
+// app/components/shared/ErrorState.tsx
+'use client';
+
 import React from 'react';
 
 interface ErrorStateProps {

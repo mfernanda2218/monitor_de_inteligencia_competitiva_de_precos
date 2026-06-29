@@ -26,9 +26,6 @@ function FilterProviderInternal({ children }: { children: ReactNode }) {
         alertSeverity: searchParams.getAll('severity'),
         minPrice: searchParams.get('minPrice') ? Number(searchParams.get('minPrice')) : null,
         maxPrice: searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : null,
-        minMarketShare: searchParams.get('minMarketShare') ? Number(searchParams.get('minMarketShare')) : null,
-        minRecords: searchParams.get('minRecords') ? Number(searchParams.get('minRecords')) : null,
-        minBrands: searchParams.get('minBrands') ? Number(searchParams.get('minBrands')) : null,
         period: {
             start: searchParams.get('periodStart') || null,
             end: searchParams.get('periodEnd') || null,
@@ -64,9 +61,6 @@ function FilterProviderInternal({ children }: { children: ReactNode }) {
 
         if (filtersToSync.minPrice !== null) params.set('minPrice', String(filtersToSync.minPrice));
         if (filtersToSync.maxPrice !== null) params.set('maxPrice', String(filtersToSync.maxPrice));
-        if (filtersToSync.minMarketShare !== null) params.set('minMarketShare', String(filtersToSync.minMarketShare));
-        if (filtersToSync.minRecords !== null) params.set('minRecords', String(filtersToSync.minRecords));
-        if (filtersToSync.minBrands !== null) params.set('minBrands', String(filtersToSync.minBrands));
         if (filtersToSync.period.start) params.set('periodStart', filtersToSync.period.start);
         if (filtersToSync.period.end) params.set('periodEnd', filtersToSync.period.end);
         if (filtersToSync.orderBy) params.set('orderBy', filtersToSync.orderBy);

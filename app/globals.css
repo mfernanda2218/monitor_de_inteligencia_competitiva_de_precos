@@ -80,7 +80,6 @@ textarea {
   background: #f9fafb;
 }
 
-/* ============ SIDEBAR ============ */
 .sidebar {
   position: fixed;
   left: 0;
@@ -92,8 +91,9 @@ textarea {
   box-shadow: 4px 0 15px -3px rgba(0, 0, 0, 0.08);
   z-index: 50;
   overflow-y: auto;
-  /* Scroll apenas na sidebar se necessário */
   flex-shrink: 0;
+  scroll-behavior: smooth;
+  transition: width 0.25s ease;
 }
 
 .sidebar-header {
@@ -121,6 +121,8 @@ textarea {
   flex-direction: column;
   gap: 0.375rem;
 }
+
+
 
 .nav-item {
   padding: 0.9rem 1.25rem;
@@ -152,12 +154,19 @@ textarea {
   flex-direction: column;
   height: 100vh;
   overflow: hidden;
-  /* Impede scroll duplicado */
-  padding: 1.5rem 2rem;
+  padding: 1.25rem 1.5rem;
   background: var(--background);
+  transition: margin-left 0.25s ease;
 }
 
-/* ============ ÁREA DE CONTEÚDO COM SCROLL ============ */
+.sidebar.collapsed~.main-content {
+  margin-left: 72px;
+}
+
+.main-content-expanded {
+  margin-left: 72px !important;
+}
+
 .content-area {
   flex: 1;
   overflow-y: auto;
@@ -335,16 +344,22 @@ textarea {
   min-width: 0;
 }
 
+.page-header {
+  padding: 12px 14px;
+  flex-direction: column;
+  text-align: center !important;
+}
+
 .dashboard-header {
   max-width: 1240px;
   margin-left: auto;
   margin-right: auto;
-  text-align: center;
+  text-align: left !important;
   flex-shrink: 0;
 }
 
 .dashboard-header>div {
-  justify-content: center;
+  justify-content: flex-start !important;
 }
 
 .dashboard-header>div>div {
@@ -503,7 +518,6 @@ textarea {
   color: var(--neutral);
 }
 
-/* ============ EMPTY STATE ============ */
 .empty-chart {
   min-height: 180px;
   display: flex;
@@ -739,16 +753,11 @@ textarea {
   color: var(--text-primary);
 }
 
-/* ============ RESPONSIVIDADE ============ */
 @media (max-width: 1024px) {
   .main-content {
     margin-left: 0;
     padding: 1.5rem;
     max-width: 100%;
-  }
-
-  .sidebar {
-    display: none;
   }
 
   .grid-3,
@@ -908,13 +917,12 @@ textarea {
   margin-top: 4px;
 }
 
-/* Ajuste no globals.css */
+/* Adicione ao globals.css */
 .sidebar {
   position: fixed;
   left: 0;
   top: 0;
   bottom: 0;
-  width: 280px;
   background: white;
   border-right: 1px solid #e5e7eb;
   box-shadow: 4px 0 15px -3px rgba(0, 0, 0, 0.08);
@@ -922,6 +930,45 @@ textarea {
   overflow-y: auto;
   flex-shrink: 0;
   scroll-behavior: smooth;
+  transition: width 0.25s ease;
+}
+
+.sidebar.collapsed {
+  width: 72px !important;
+}
+
+/* Para quando o menu estiver colapsado */
+.sidebar.collapsed .nav-item span:not(:first-child) {
+  display: none;
+}
+
+/* Destaque do item ativo */
+.nav-item.active {
+  background: #EFF6FF !important;
+  border-color: #BFDBFE !important;
+  color: #2563EB !important;
+}
+
+.nav-item.active svg {
+  color: #2563EB !important;
+  opacity: 1 !important;
+}
+
+/* Responsividade */
+@media (max-width: 1024px) {
+  .sidebar {
+    width: 280px !important;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  .main-content {
+    margin-left: 0 !important;
+  }
 }
 
 .sidebar::-webkit-scrollbar {
@@ -1070,5 +1117,16 @@ textarea {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* Adicione ao globals.css */
+@media (max-width: 1024px) {
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+
+  .main-content {
+    padding-top: 0.75rem;
   }
 }

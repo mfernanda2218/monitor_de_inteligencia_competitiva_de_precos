@@ -141,18 +141,6 @@ export default function MarketplacesPage() {
       filtered = filtered.filter((mp) => mp.avg_spot_price <= filters.maxPrice!);
     }
 
-    if (filters.minMarketShare !== null) {
-      filtered = filtered.filter((mp) => mp.market_share >= filters.minMarketShare!);
-    }
-
-    if (filters.minRecords !== null) {
-      filtered = filtered.filter((mp) => mp.count >= filters.minRecords!);
-    }
-
-    if (filters.minBrands !== null) {
-      filtered = filtered.filter((mp) => mp.brand_count >= filters.minBrands!);
-    }
-
     const orderByMap: Record<string, keyof MarketplaceItem> = {
       marketShare: 'market_share',
       avgPrice: 'avg_spot_price',

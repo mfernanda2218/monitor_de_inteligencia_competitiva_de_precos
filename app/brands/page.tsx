@@ -139,14 +139,6 @@ export default function BrandsPage() {
       filtered = filtered.filter((brand) => brand.avg_spot_price <= filters.maxPrice!);
     }
 
-    if (filters.minMarketShare !== null) {
-      filtered = filtered.filter((brand) => brand.market_share >= filters.minMarketShare!);
-    }
-
-    if (filters.minRecords !== null) {
-      filtered = filtered.filter((brand) => brand.count >= filters.minRecords!);
-    }
-
     const orderByMap: Record<string, keyof BrandItem> = {
       marketShare: 'market_share',
       avgPrice: 'avg_spot_price',

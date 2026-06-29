@@ -1,6 +1,7 @@
+// app/brands/page.tsx
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { TARGET_BRAND, BENCHMARK_BRAND } from '../config/brands';
 import PageHeader from '../components/layout/PageHeader';
 import AnalyticsTable from '../components/ui/AnalyticsTable';
@@ -9,6 +10,9 @@ import DashboardCard from '../components/ui/DashboardCard';
 import KPIWidget from '../components/ui/KPIWidget';
 import LoadingState from '../components/shared/LoadingState';
 import ErrorState from '../components/shared/ErrorState';
+import FiltersBar from '../components/ui/FiltersBar';
+import { useFilters } from '../hooks/useFilters';
+import { FiltersState } from '../types/filters';
 
 interface BrandData {
   [key: string]: {
@@ -26,38 +30,170 @@ interface Summary {
   total_records: number;
 }
 
+interface FilterOption {
+  value: string;
+  label: string;
+}
+
+interface BrandItem {
+  name: string;
+  count: number;
+  avg_spot_price: number;
+  min_spot_price: number;
+  max_spot_price: number;
+  price_variation: number;
+  marketplace_coverage: number;
+  marketplaces: string[];
+  market_share: number;
+}
+
 export default function BrandsPage() {
+  const { filters, setFilters, clearFilters } = useFilters();
+
   const [brands, setBrands] = useState<BrandData | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [filterOptions, setFilterOptions] = useState<{
+    marketplaces: FilterOption[];
+    categories: FilterOption[];
+  }>({
+    marketplaces: [],
+    categories: [],
+  });
 
+  // Carregar opções de filtro
   useEffect(() => {
-    Promise.all([
-      fetch('/api/brands').then(res => res.json()),
-      fetch('/api/summary').then(res => res.json())
-    ])
-      .then(([brandsData, summaryData]) => {
+    const fetchOptions = async () => {
+      try {
+        const [marketplacesRes, categoriesRes] = await Promise.all([
+          fetch('/api/marketplaces'),
+          fetch('/api/categories')
+        ]);
+
+        const marketplacesData = await marketplacesRes.json();
+        const categoriesData = await categoriesRes.json();
+
+        setFilterOptions({
+          marketplaces: Object.keys(marketplacesData || {}).map((k: string) => ({ value: k, label: k })),
+          categories: Object.keys(categoriesData || {}).map((k: string) => ({ value: k, label: k })),
+        });
+      } catch (error) {
+        console.error('Error fetching filter options:', error);
+      }
+    };
+
+    fetchOptions();
+  }, []);
+
+  // Carregar dados
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const [brandsData, summaryData] = await Promise.all([
+          fetch('/api/brands').then(res => res.json()),
+          fetch('/api/summary').then(res => res.json())
+        ]);
+
         setBrands(brandsData);
         setSummary(summaryData);
         setLoading(false);
-      })
-      .catch(err => {
+      } catch (err) {
         setError('Falha ao carregar dados de marcas');
         setLoading(false);
-      });
+      }
+    };
+
+    fetchData();
   }, []);
+
+  // Filtrar dados
+  const filteredBrands = useMemo((): BrandItem[] => {
+    if (!brands || !summary) return [];
+
+    const brandsArray: BrandItem[] = Object.entries(brands).map(([name, data]) => ({
+      name,
+      ...data,
+      market_share: ((data.count / summary.total_records) * 100),
+    }));
+
+    let filtered = brandsArray;
+
+    // Filtro de marketplaces
+    if (filters.marketplaces.length > 0) {
+      filtered = filtered.filter((brand) =>
+        brand.marketplaces.some((mp: string) =>
+          filters.marketplaces.some((f: string) => f.toUpperCase() === mp.toUpperCase())
+        )
+      );
+    }
+
+    // Filtro de categorias (se houver dados de categoria)
+    // Nota: Este filtro requer dados adicionais, pode ser implementado se disponível
+
+    // Filtro Samsung apenas
+    if (filters.targetBrandOnly) {
+      filtered = filtered.filter((brand) =>
+        brand.name.toUpperCase() === TARGET_BRAND.toUpperCase()
+      );
+    }
+
+    // Filtro de preço
+    if (filters.minPrice !== null) {
+      filtered = filtered.filter((brand) => brand.avg_spot_price >= filters.minPrice!);
+    }
+    if (filters.maxPrice !== null) {
+      filtered = filtered.filter((brand) => brand.avg_spot_price <= filters.maxPrice!);
+    }
+
+    // Filtro de market share
+    if (filters.minMarketShare !== null) {
+      filtered = filtered.filter((brand) => brand.market_share >= filters.minMarketShare!);
+    }
+
+    // Filtro de registros
+    if (filters.minRecords !== null) {
+      filtered = filtered.filter((brand) => brand.count >= filters.minRecords!);
+    }
+
+    // Ordenação
+    const orderByMap: Record<string, keyof BrandItem> = {
+      marketShare: 'market_share',
+      avgPrice: 'avg_spot_price',
+      count: 'count',
+      coverage: 'marketplace_coverage',
+      minPrice: 'min_spot_price',
+      maxPrice: 'max_spot_price',
+      priceVariation: 'price_variation',
+    };
+
+    const sortKey = orderByMap[filters.orderBy] || 'market_share';
+    const direction = filters.orderDirection === 'asc' ? 1 : -1;
+
+    filtered.sort((a, b) => {
+      const aVal = a[sortKey];
+      const bVal = b[sortKey];
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return (aVal - bVal) * direction;
+      }
+      return String(aVal).localeCompare(String(bVal)) * direction;
+    });
+
+    return filtered;
+  }, [brands, summary, filters]);
+
+  const handleFilterChange = (newFilters: Partial<FiltersState>) => {
+    setFilters(newFilters);
+  };
 
   if (loading) return <LoadingState message="Carregando análise de marcas..." />;
   if (error) return <ErrorState message={error} />;
 
-  const brandsArray = brands ? Object.entries(brands).map(([name, data]) => ({
-    name,
-    ...data,
-    market_share: summary ? ((data.count / summary.total_records) * 100) : 0
-  })) : [];
-
-  brandsArray.sort((a, b) => b.market_share - a.market_share);
+  const targetBrand = filteredBrands.find((b) => b.name.toUpperCase() === TARGET_BRAND.toUpperCase());
+  const benchmarkBrand = filteredBrands.find((b) => b.name.toUpperCase() === BENCHMARK_BRAND.toUpperCase());
 
   const getMarketShareColor = (share: number) => {
     if (share > 10) return 'success';
@@ -78,6 +214,9 @@ export default function BrandsPage() {
           </span>
           {value.toUpperCase() === TARGET_BRAND.toUpperCase() && (
             <StatusBadge variant="success" size="sm">★</StatusBadge>
+          )}
+          {value.toUpperCase() === BENCHMARK_BRAND.toUpperCase() && (
+            <StatusBadge variant="warning" size="sm">BM</StatusBadge>
           )}
         </div>
       )
@@ -146,8 +285,8 @@ export default function BrandsPage() {
     }
   ];
 
-  const targetBrand = brandsArray.find(b => b.name.toUpperCase() === TARGET_BRAND.toUpperCase());
-  const benchmarkBrand = brandsArray.find(b => b.name.toUpperCase() === BENCHMARK_BRAND.toUpperCase());
+  const totalBrands = filteredBrands.length;
+  const totalRecords = filteredBrands.reduce((acc, b) => acc + b.count, 0);
 
   return (
     <div className="page-wrapper">
@@ -157,24 +296,38 @@ export default function BrandsPage() {
         breadcrumb={{ label: 'Voltar ao Dashboard', href: '/' }}
       />
 
+      <FiltersBar
+        filters={filters}
+        onFilterChange={handleFilterChange}
+        onClearFilters={clearFilters}
+        options={{
+          marketplaces: filterOptions.marketplaces,
+          categories: filterOptions.categories,
+          brands: [],
+        }}
+        mode="brands"
+        totalResults={totalBrands}
+        isLoading={loading}
+      />
+
       <div className="grid grid-3 section-gap">
         <KPIWidget
           title="Total de Marcas"
-          value={brandsArray.length}
+          value={totalBrands}
           color="primary"
         />
-        {brandsArray.length > 0 && (
+        {filteredBrands.length > 0 && (
           <KPIWidget
             title="Líder de Mercado"
-            value={brandsArray[0].name}
-            subtitle={`${brandsArray[0].market_share.toFixed(1)}% market share`}
+            value={filteredBrands[0].name}
+            subtitle={`${filteredBrands[0].market_share.toFixed(1)}% market share`}
             color="success"
           />
         )}
         {targetBrand && (
           <KPIWidget
             title={`Posição ${TARGET_BRAND}`}
-            value={`${brandsArray.findIndex(b => b.name.toUpperCase() === TARGET_BRAND.toUpperCase()) + 1}º`}
+            value={`${filteredBrands.findIndex((b) => b.name.toUpperCase() === TARGET_BRAND.toUpperCase()) + 1}º`}
             subtitle={`${targetBrand.market_share.toFixed(1)}% market share`}
             color="info"
           />
@@ -182,37 +335,54 @@ export default function BrandsPage() {
       </div>
 
       <DashboardCard className="section-gap" padding="sm">
-        <AnalyticsTable
-          columns={tableColumns}
-          data={brandsArray}
-          pageSize={6}
-        />
+        {filteredBrands.length > 0 ? (
+          <AnalyticsTable
+            columns={tableColumns}
+            data={filteredBrands}
+            pageSize={6}
+          />
+        ) : (
+          <div className="empty-chart" style={{ minHeight: '200px' }}>
+            <div>
+              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🔍</div>
+              <div style={{ fontWeight: 500, color: '#111827' }}>
+                Nenhuma marca encontrada
+              </div>
+              <div style={{ fontSize: '0.875rem', color: '#6B7280', marginTop: '4px' }}>
+                Tente ajustar os filtros para ver mais resultados
+              </div>
+            </div>
+          </div>
+        )}
       </DashboardCard>
 
       <div className="grid grid-2">
         <DashboardCard title="Insights Executivos">
           <div style={{ color: '#374151', lineHeight: 1.8 }}>
-            {brandsArray.length > 0 && (
+            {filteredBrands.length > 0 && (
               <>
                 <p style={{ marginBottom: '12px', margin: 0 }}>
-                  <strong style={{ color: '#059669' }}>Líder de Mercado:</strong> {brandsArray[0].name} com {brandsArray[0].market_share.toFixed(1)}% de market share
+                  <strong style={{ color: '#059669' }}>Líder de Mercado:</strong> {filteredBrands[0].name} com {filteredBrands[0].market_share.toFixed(1)}% de market share
                 </p>
                 {targetBrand && (
                   <p style={{ marginBottom: '12px', margin: 0 }}>
                     <strong style={{ color: '#059669' }}>Posição {TARGET_BRAND}:</strong> {
-                      brandsArray.findIndex(b => b.name.toUpperCase() === TARGET_BRAND.toUpperCase()) + 1
+                      filteredBrands.findIndex((b) => b.name.toUpperCase() === TARGET_BRAND.toUpperCase()) + 1
                     }º lugar com {targetBrand.market_share.toFixed(1)}% de market share
                   </p>
                 )}
                 {benchmarkBrand && (
                   <p style={{ marginBottom: '12px', margin: 0 }}>
                     <strong style={{ color: '#D97706' }}>{BENCHMARK_BRAND} (Benchmark):</strong> {
-                      brandsArray.findIndex(b => b.name.toUpperCase() === BENCHMARK_BRAND.toUpperCase()) + 1
+                      filteredBrands.findIndex((b) => b.name.toUpperCase() === BENCHMARK_BRAND.toUpperCase()) + 1
                     }º lugar com {benchmarkBrand.market_share.toFixed(1)}% de market share
                   </p>
                 )}
                 <p style={{ margin: 0 }}>
-                  <strong style={{ color: '#059669' }}>Total de Marcas:</strong> {brandsArray.length} marcas monitoradas
+                  <strong style={{ color: '#059669' }}>Total de Marcas:</strong> {totalBrands} marcas monitoradas
+                </p>
+                <p style={{ margin: 0 }}>
+                  <strong style={{ color: '#059669' }}>Total de Registros:</strong> {totalRecords.toLocaleString()}
                 </p>
               </>
             )}

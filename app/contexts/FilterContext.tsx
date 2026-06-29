@@ -1,9 +1,10 @@
 // contexts/FilterContext.tsx
 'use client';
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { FiltersState, defaultFilters } from '../types/filters';
+import LoadingState from '../components/shared/LoadingState';
 
 interface FilterContextType {
     filters: FiltersState;
@@ -14,7 +15,7 @@ interface FilterContextType {
 
 const FilterContext = createContext<FilterContextType | undefined>(undefined);
 
-export function FilterProvider({ children }: { children: ReactNode }) {
+function FilterProviderInternal({ children }: { children: ReactNode }) {
     const router = useRouter();
     const searchParams = useSearchParams();
 
@@ -93,6 +94,14 @@ export function FilterProvider({ children }: { children: ReactNode }) {
         <FilterContext.Provider value={{ filters, setFilters, clearFilters, hasActiveFilters }}>
             {children}
         </FilterContext.Provider>
+    );
+}
+
+export function FilterProvider({ children }: { children: ReactNode }) {
+    return (
+        <Suspense fallback={<LoadingState message="Carregando filtros..." />}>
+            <FilterProviderInternal>{children}</FilterProviderInternal>
+        </Suspense>
     );
 }
 

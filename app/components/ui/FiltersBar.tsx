@@ -26,6 +26,21 @@ interface FiltersBarProps {
 
 type FilterKey = 'marketplaces' | 'categories' | 'brands';
 
+const severityOptions = [
+    { value: 'danger', label: 'Crítico', color: '#DC2626', bg: '#FEE2E2' },
+    { value: 'warning', label: 'Atenção', color: '#D97706', bg: '#FEF3C7' },
+    { value: 'success', label: 'Sucesso', color: '#059669', bg: '#DCFCE7' },
+    { value: 'info', label: 'Info', color: '#0891B2', bg: '#E0F2FE' }
+];
+
+const orderOptions = [
+    { value: 'marketShare', label: 'Market Share' },
+    { value: 'avgPrice', label: 'Preço Médio' },
+    { value: 'count', label: 'Volume' },
+    { value: 'coverage', label: 'Cobertura' },
+    { value: 'brandCount', label: 'Nº Marcas' },
+];
+
 export default function FiltersBar({
     filters,
     onFilterChange,
@@ -41,7 +56,7 @@ export default function FiltersBar({
         setLocalFilters(filters);
     }, [filters]);
 
-    const handleChange = (key: keyof FiltersState, value: any) => {
+    const handleChange = <K extends keyof FiltersState>(key: K, value: FiltersState[K]) => {
         const updated = { ...localFilters, [key]: value };
         setLocalFilters(updated);
         onFilterChange(updated);
@@ -80,13 +95,16 @@ export default function FiltersBar({
         }
     };
 
-    const orderOptions = [
-        { value: 'marketShare', label: 'Market Share' },
-        { value: 'avgPrice', label: 'Preço Médio' },
-        { value: 'count', label: 'Volume' },
-        { value: 'coverage', label: 'Cobertura' },
-        { value: 'brandCount', label: 'Nº Marcas' },
-    ];
+    const removeSeverity = (value: string) => {
+        const current = localFilters.alertSeverity || [];
+        const updated = current.filter((item: string) => item !== value);
+        handleChange('alertSeverity', updated);
+    };
+
+    const getSeverityStyle = (severity: string) => {
+        const found = severityOptions.find(s => s.value === severity);
+        return found || severityOptions[0];
+    };
 
     return (
         <div className="card mb-lg" style={{ padding: '16px 20px' }}>
@@ -145,7 +163,7 @@ export default function FiltersBar({
                 </div>
             </div>
 
-            {/* Linha 1: Filtros principais - Marketplaces, Categorias, Marcas */}
+            {/* Linha 1: Filtros principais */}
             <div style={{
                 display: 'flex',
                 flexWrap: 'wrap',
@@ -153,6 +171,77 @@ export default function FiltersBar({
                 alignItems: 'flex-start',
                 marginBottom: '12px'
             }}>
+                {/* Severidade (apenas para brands/dashboard) */}
+                {mode === 'brands' && (
+                    <div style={{ minWidth: '160px', flex: '1 1 160px' }}>
+                        <label style={{
+                            display: 'block',
+                            fontSize: '0.68rem',
+                            fontWeight: 600,
+                            color: '#6B7280',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                            marginBottom: '4px'
+                        }}>
+                            Severidade
+                        </label>
+                        <select
+                            value=""
+                            onChange={(e) => {
+                                if (e.target.value) {
+                                    const current = localFilters.alertSeverity || [];
+                                    if (!current.includes(e.target.value)) {
+                                        handleChange('alertSeverity', [...current, e.target.value]);
+                                    }
+                                }
+                            }}
+                            className="control"
+                            style={{ width: '100%', minWidth: '130px' }}
+                        >
+                            <option value="">Selecione...</option>
+                            {severityOptions.map((s) => (
+                                <option
+                                    key={s.value}
+                                    value={s.value}
+                                    disabled={localFilters.alertSeverity?.includes(s.value)}
+                                >
+                                    {s.label}
+                                </option>
+                            ))}
+                        </select>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
+                            {localFilters.alertSeverity?.map((s) => {
+                                const style = getSeverityStyle(s);
+                                return (
+                                    <span
+                                        key={s}
+                                        style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            background: style.bg,
+                                            color: style.color,
+                                            fontSize: '0.65rem',
+                                            fontWeight: 500,
+                                            padding: '2px 8px',
+                                            borderRadius: '9999px'
+                                        }}
+                                    >
+                                        {style.label}
+                                        <X
+                                            size={12}
+                                            style={{ cursor: 'pointer', opacity: 0.6 }}
+                                            onClick={() => removeSeverity(s)}
+                                            onMouseEnter={(e) => e.currentTarget.style.opacity = '1'}
+                                            onMouseLeave={(e) => e.currentTarget.style.opacity = '0.6'}
+                                        />
+                                    </span>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
+
                 {/* Marketplaces */}
                 <div style={{ minWidth: '180px', flex: '1 1 180px' }}>
                     <label style={{
@@ -333,7 +422,7 @@ export default function FiltersBar({
                 )}
             </div>
 
-            {/* Linha 2: Filtros numéricos - Preço, Share, Registros, Ordenação */}
+            {/* Linha 2: Filtros numéricos */}
             <div style={{
                 display: 'flex',
                 flexWrap: 'wrap',
@@ -493,7 +582,7 @@ export default function FiltersBar({
                 </div>
             </div>
 
-            {/* Linha 3: Samsung Toggle - Abaixo de tudo */}
+            {/* Linha 3: Samsung Toggle */}
             <div style={{
                 display: 'flex',
                 alignItems: 'center',

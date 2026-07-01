@@ -39,7 +39,7 @@ def format_date(date_value):
             return str(date_value).strip()
             
         return date_obj.strftime('%d/%m/%Y')
-    except:
+    except Exception as e:
         return str(date_value).strip()
 
 def process_chunk(chunk):
@@ -115,10 +115,10 @@ def process_chunk(chunk):
         results['timeline'][sku_key][date_key].extend(group['SPOT PRICE OF MARKETPLACE'].dropna().tolist())
     
     # Collect all prices by SKU and brand for competitive analysis
-    for _, row in chunk.iterrows():
-        sku = row['SKU']
-        brand = row['BRAND']
-        price = row['SPOT PRICE OF MARKETPLACE']
+    for row in chunk[['SKU', 'BRAND', 'SPOT PRICE OF MARKETPLACE']].itertuples(index=False):
+        sku = row[0]
+        brand = row[1]
+        price = row[2]
         if pd.notna(sku) and pd.notna(brand) and pd.notna(price):
             if sku not in results['sku_prices']:
                 results['sku_prices'][sku] = {}
@@ -221,8 +221,7 @@ def finalize_results(results):
         data['brand_count'] = len(data['brands'])
         data['brands'] = list(data['brands'])
     
-    # Finalize timeline - compute daily averages
-        # Finalize timeline - compute daily averages (com ordenação cronológica correta)
+    # Finalize timeline - compute daily averages (com ordenação cronológica correta)
     timeline_final = {}
     for sku, dates in results['timeline'].items():
         timeline_final[sku] = []

@@ -90,8 +90,18 @@ export default function BrandsPage() {
       setError(null);
 
       try {
+        const buildFilteredUrl = (baseUrl: string, filtersToBuild: any) => {
+          const params = new URLSearchParams();
+          if (filtersToBuild.brands?.length > 0) params.append('brands', filtersToBuild.brands.join(','));
+          if (filtersToBuild.marketplaces?.length > 0) params.append('marketplaces', filtersToBuild.marketplaces.join(','));
+          if (filtersToBuild.categories?.length > 0) params.append('categories', filtersToBuild.categories.join(','));
+          if (filtersToBuild.alertSeverity?.length > 0) params.append('severity', filtersToBuild.alertSeverity.join(','));
+          const queryString = params.toString();
+          return queryString ? `${baseUrl}?${queryString}` : baseUrl;
+        };
+
         const [brandsData, summaryData] = await Promise.all([
-          fetch('/api/brands').then(res => res.json()),
+          fetch(buildFilteredUrl('/api/brands', filters)).then(res => res.json()),
           fetch('/api/summary').then(res => res.json())
         ]);
 
@@ -105,7 +115,7 @@ export default function BrandsPage() {
     };
 
     fetchData();
-  }, []);
+  }, [filters]);
 
   const filteredBrands = useMemo((): BrandItem[] => {
     if (!brands || !summary) return [];

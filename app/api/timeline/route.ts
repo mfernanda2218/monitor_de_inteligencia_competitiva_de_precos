@@ -1,29 +1,22 @@
 // app/api/timeline/route.ts
 import { NextResponse } from 'next/server';
-import { createClient } from 'redis';
-
-const client = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379'
-});
-
-client.on('error', (err) => console.error('Redis Client Error', err));
+import { getRedisClient } from '@/lib/redis';
+import { getFiltersFromRequest } from '@/lib/filters';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const sku = searchParams.get('sku');
-    const brandFilter = searchParams.get('brands')?.split(',') || [];
+    const filters = getFiltersFromRequest(searchParams);
 
     if (!sku) {
       return NextResponse.json([]);
     }
 
-    await client.connect();
+    const client = await getRedisClient();
 
     // Buscar timeline do SKU
     const timelineData = await client.get(`dashboard:timeline:${sku}`);
-
-    await client.disconnect();
 
     if (!timelineData) {
       console.log(`No timeline data found for SKU: ${sku}`);

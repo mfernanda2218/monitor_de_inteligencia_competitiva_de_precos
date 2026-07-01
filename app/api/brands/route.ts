@@ -1,23 +1,15 @@
 // app/api/brands/route.ts
 import { NextResponse } from 'next/server';
-import { createClient } from 'redis';
-
-const client = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379'
-});
-
-client.on('error', (err) => console.error('Redis Client Error', err));
+import { getRedisClient } from '@/lib/redis';
+import { getFiltersFromRequest } from '@/lib/filters';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const brandFilter = searchParams.get('brands')?.split(',') || [];
-    const marketplaceFilter = searchParams.get('marketplaces')?.split(',') || [];
-    const categoryFilter = searchParams.get('categories')?.split(',') || [];
+    const filters = getFiltersFromRequest(searchParams);
 
-    await client.connect();
+    const client = await getRedisClient();
     const data = await client.get('dashboard:brands');
-    await client.disconnect();
 
     if (!data) {
       return NextResponse.json({ error: 'No data found' }, { status: 404 });
@@ -26,9 +18,9 @@ export async function GET(request: Request) {
     let brands = JSON.parse(data);
 
     // Aplicar filtro de marcas (se houver)
-    if (brandFilter.length > 0) {
+    if (filters.brands.length > 0) {
       const filtered: Record<string, any> = {};
-      brandFilter.forEach(b => {
+      filters.brands.forEach(b => {
         const key = Object.keys(brands).find(k => k.toUpperCase() === b.toUpperCase());
         if (key && brands[key]) {
           filtered[key] = brands[key];
@@ -38,12 +30,12 @@ export async function GET(request: Request) {
     }
 
     // Se houver filtro de marketplaces, filtrar marcas que estão nesses marketplaces
-    if (marketplaceFilter.length > 0) {
+    if (filters.marketplaces.length > 0) {
       const filtered: Record<string, any> = {};
       Object.entries(brands).forEach(([brand, data]: [string, any]) => {
         // Verifica se a marca está presente em algum dos marketplaces filtrados
         const hasMarketplace = data.marketplaces?.some((mp: string) =>
-          marketplaceFilter.some(f => f.toUpperCase() === mp.toUpperCase())
+          filters.marketplaces.some(f => f.toUpperCase() === mp.toUpperCase())
         );
         if (hasMarketplace) {
           filtered[brand] = data;

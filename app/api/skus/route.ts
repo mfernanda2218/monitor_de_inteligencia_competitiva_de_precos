@@ -1,29 +1,28 @@
 import { NextResponse } from 'next/server';
-import { createClient } from 'redis';
+import { getRedisClient } from '@/lib/redis';
+import { getFiltersFromRequest } from '@/lib/filters';
 
-const client = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379'
-});
-
-client.on('error', (err) => console.error('Redis Client Error', err));
-
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    await client.connect();
+    const { searchParams } = new URL(request.url);
+    const filters = getFiltersFromRequest(searchParams);
+
+    const client = await getRedisClient();
     const data = await client.get('dashboard:sku_metrics');
     const fallbackData = await client.get('dashboard:top_skus');
-    await client.disconnect();
+
+    let skus: any[] = [];
 
     if (data) {
       const skuMetrics = JSON.parse(data);
       if (Array.isArray(skuMetrics) && skuMetrics.length > 0) {
-        return NextResponse.json(skuMetrics);
+        skus = skuMetrics;
       }
     }
 
-    if (fallbackData) {
-      const skus = JSON.parse(fallbackData);
-      return NextResponse.json(Array.isArray(skus) ? skus.map((sku: string) => ({
+    if (skus.length === 0 && fallbackData) {
+      const parsedFallback = JSON.parse(fallbackData);
+      skus = Array.isArray(parsedFallback) ? parsedFallback.map((sku: string) => ({
         sku,
         record_count: null,
         brand_count: null,
@@ -34,12 +33,28 @@ export async function GET() {
         market_min_competitor: null,
         premium_vs_min: null,
         alert_severity: null
-      })) : []);
+      })) : [];
     }
 
-    if (!data) {
+    if (skus.length === 0) {
       return NextResponse.json({ error: 'No data found' }, { status: 404 });
     }
+
+    // Filtro por marcas
+    if (filters.brands.length > 0) {
+      skus = skus.filter((sku: any) =>
+        sku.target_brand && filters.brands.some(b => sku.target_brand.toUpperCase() === b.toUpperCase())
+      );
+    }
+
+    // Filtro por severidade
+    if (filters.alertSeverity.length > 0) {
+      skus = skus.filter((sku: any) =>
+        sku.alert_severity && filters.alertSeverity.includes(sku.alert_severity)
+      );
+    }
+
+    return NextResponse.json(skus);
   } catch (error) {
     console.error('Error fetching SKU metrics:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

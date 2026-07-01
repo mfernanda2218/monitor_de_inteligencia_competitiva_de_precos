@@ -1,24 +1,15 @@
 // app/api/top_skus/route.ts
 import { NextResponse } from 'next/server';
-import { createClient } from 'redis';
-
-const client = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379'
-});
-
-client.on('error', (err) => console.error('Redis Client Error', err));
+import { getRedisClient } from '@/lib/redis';
+import { getFiltersFromRequest } from '@/lib/filters';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const brandFilter = searchParams.get('brands')?.split(',') || [];
-    const marketplaceFilter = searchParams.get('marketplaces')?.split(',') || [];
-    const categoryFilter = searchParams.get('categories')?.split(',') || [];
-    const severityFilter = searchParams.get('severity')?.split(',') || [];
+    const filters = getFiltersFromRequest(searchParams);
     const searchQuery = searchParams.get('search') || '';
-    const period = searchParams.get('period') || '30d';
 
-    await client.connect();
+    const client = await getRedisClient();
 
     // Buscar métricas de SKU
     let skuMetrics = [];
@@ -50,17 +41,15 @@ export async function GET(request: Request) {
       }
     }
 
-    await client.disconnect();
-
     // Aplicar filtros
     let filteredSkus = skuMetrics;
 
     // Filtro por marca
-    if (brandFilter.length > 0) {
+    if (filters.brands.length > 0) {
       filteredSkus = filteredSkus.filter((sku: any) => {
         // Verificar se o SKU tem a marca alvo ou se a marca está na lista
         if (sku.target_brand) {
-          return brandFilter.some(b => sku.target_brand.toUpperCase() === b.toUpperCase());
+          return filters.brands.some(b => sku.target_brand.toUpperCase() === b.toUpperCase());
         }
         // Se não tiver target_brand, manter (não filtrar)
         return true;
@@ -68,10 +57,10 @@ export async function GET(request: Request) {
     }
 
     // Filtro por severidade de alerta
-    if (severityFilter.length > 0) {
+    if (filters.alertSeverity.length > 0) {
       filteredSkus = filteredSkus.filter((sku: any) => {
         if (!sku.alert_severity) return false;
-        return severityFilter.includes(sku.alert_severity);
+        return filters.alertSeverity.includes(sku.alert_severity);
       });
     }
 

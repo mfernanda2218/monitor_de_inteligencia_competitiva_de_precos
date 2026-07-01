@@ -1,17 +1,10 @@
 import { NextResponse } from 'next/server';
-import { createClient } from 'redis';
-
-const client = createClient({
-  url: process.env.REDIS_URL || 'redis://localhost:6379'
-});
-
-client.on('error', (err) => console.error('Redis Client Error', err));
+import { getRedisClient } from '@/lib/redis';
 
 export async function GET() {
   try {
-    await client.connect();
+    const client = await getRedisClient();
     const data = await client.get('dashboard:summary');
-    await client.disconnect();
     
     if (!data) {
       return NextResponse.json({ error: 'No data found' }, { status: 404 });
